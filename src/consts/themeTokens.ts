@@ -1,0 +1,40 @@
+export const THEME_TOKENS = {
+  color: {
+    appBackground: '#F6F8F5',
+    canvas: '#FCFDFB',
+    surface: '#FFFFFF',
+    surfaceWarm: '#FBFBFA',
+    surfaceMuted: '#F2F5F1',
+    borderSubtle: '#E7ECE6',
+    borderStrong: '#CBD5D1',
+    text: '#111827',
+    textMuted: '#687076',
+    charcoal: '#1F2933',
+    railLeft: '#2FAD5D',
+    energy: '#43B970',
+    energySoft: '#E7F7EC',
+    danger: '#B42318',
+  },
+  radius: {
+    button: 22,
+    panel: 30,
+    chip: 18,
+    block: 9,
+  },
+  shadow: {
+    soft: {
+      shadowColor: '#1F2933',
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.08,
+      shadowRadius: 24,
+      elevation: 4,
+    },
+    floating: {
+      shadowColor: '#1F2933',
+      shadowOffset: { width: 0, height: 18 },
+      shadowOpacity: 0.12,
+      shadowRadius: 34,
+      elevation: 10,
+    },
+  },
+};
