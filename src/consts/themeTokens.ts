@@ -1,40 +1,47 @@
-export const THEME_TOKENS = {
-  color: {
-    appBackground: '#F6F8F5',
-    canvas: '#FCFDFB',
-    surface: '#FFFFFF',
-    surfaceWarm: '#FBFBFA',
-    surfaceMuted: '#F2F5F1',
-    borderSubtle: '#E7ECE6',
-    borderStrong: '#CBD5D1',
-    text: '#111827',
-    textMuted: '#687076',
-    charcoal: '#1F2933',
-    railLeft: '#2FAD5D',
-    energy: '#43B970',
-    energySoft: '#E7F7EC',
-    danger: '#B42318',
+typescript
+const lightPalette = {
+  background: '#F4F7F6', // Off-white premium
+  rungInactive: '#95A5A6', // Linhas inativas bem visíveis
+  rungActive: '#27AE60', // Verde técnico para lógica ativa
+  powerRailLeft: '#27AE60', // Barramento esquerdo verde
+  powerRailRight: '#111111', // Barramento direito preto
+  diagnosticText: '#D35400', // Laranja/Âmbar para diagnósticos
+  componentBackground: '#FFFFFF', // Blocos claros
+  textPrimary: '#2C3E50', // Navy para alto contraste
+  techBlue: '#3498DB', 
+  danger: '#E74C3C' 
+};
+
+const darkPalette = {
+  background: '#1A1A1A', 
+  rungInactive: '#2D2D2D', 
+  rungActive: '#39FF14',
+  powerRailLeft: '#39FF14',
+  powerRailRight: '#39FF14',
+  diagnosticText: '#FFBF00', 
+  componentBackground: '#252525', 
+  textPrimary: '#E0E0E0',
+  techBlue: '#3498DB', 
+  danger: '#E74C3C' 
+};
+
+export const EasyCLPTheme = {
+  colors: lightPalette, // MVP congelado estritamente em Light Technical UI
+  palettes: {
+    light: lightPalette,
+    dark: darkPalette // Congelado para a Fase 2
   },
-  radius: {
-    button: 22,
-    panel: 30,
-    chip: 18,
-    block: 9,
+  typography: {
+    ui: 'Inter', 
+    ladder: 'JetBrains Mono' 
   },
-  shadow: {
-    soft: {
-      shadowColor: '#1F2933',
-      shadowOffset: { width: 0, height: 12 },
-      shadowOpacity: 0.08,
-      shadowRadius: 24,
-      elevation: 4,
-    },
-    floating: {
-      shadowColor: '#1F2933',
-      shadowOffset: { width: 0, height: 18 },
-      shadowOpacity: 0.12,
-      shadowRadius: 34,
-      elevation: 10,
-    },
+  geometry: {
+    strokeWidthInactive: 2, 
+    strokeWidthActive: 3, 
+    rungGap: 32, 
+    touchTargetSize: 44 // Touch-friendly (blocos grandes) para mobile
   },
+  animation: {
+    stateTransitionMs: 150 
+  }
 };
