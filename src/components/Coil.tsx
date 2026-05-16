@@ -1,6 +1,6 @@
 import React from 'react';
 import { G, Line, Path, Text as SvgText } from 'react-native-svg';
-import { GEO } from './geometry';
+import { LADDER_GEOMETRY as GEO } from '../consts/ladderGeometry';
 
 export interface CoilProps {
   x: number;
@@ -8,9 +8,15 @@ export interface CoilProps {
   tag: string;
 }
 
+const WIRE_COLOR = '#404040';
+const TEXT_COLOR = '#A3A3A3';
+const WIRE_WIDTH = 2;
+const BLOCK_WIDTH = 80;
+const BLOCK_HEIGHT = 60;
+
 export const Coil: React.FC<CoilProps> = React.memo(({ x, y, tag }) => {
-  const midX = GEO.BLOCK_WIDTH / 2;
-  const midY = GEO.BLOCK_HEIGHT / 2;
+  const midX = BLOCK_WIDTH / 2;
+  const midY = BLOCK_HEIGHT / 2;
   
   // Geometria das curvas da bobina
   const arcOffset = 8; 
@@ -25,21 +31,21 @@ export const Coil: React.FC<CoilProps> = React.memo(({ x, y, tag }) => {
   return (
     <G x={x} y={y}>
       {/* Fio de entrada */}
-      <Line x1={0} y1={midY} x2={wireMeetX} y2={midY} stroke={GEO.WIRE_COLOR} strokeWidth={GEO.WIRE_WIDTH} />
+      <Line x1={0} y1={midY} x2={wireMeetX} y2={midY} stroke={WIRE_COLOR} strokeWidth={WIRE_WIDTH} />
       
       {/* Fio de saída */}
-      <Line x1={GEO.BLOCK_WIDTH - wireMeetX} y1={midY} x2={GEO.BLOCK_WIDTH} y2={midY} stroke={GEO.WIRE_COLOR} strokeWidth={GEO.WIRE_WIDTH} />
+      <Line x1={BLOCK_WIDTH - wireMeetX} y1={midY} x2={BLOCK_WIDTH} y2={midY} stroke={WIRE_COLOR} strokeWidth={WIRE_WIDTH} />
       
       {/* Semicírculos (Parênteses) */}
-      <Path d={leftCurve} fill="none" stroke={GEO.WIRE_COLOR} strokeWidth={GEO.WIRE_WIDTH} />
-      <Path d={rightCurve} fill="none" stroke={GEO.WIRE_COLOR} strokeWidth={GEO.WIRE_WIDTH} />
+      <Path d={leftCurve} fill="none" stroke={WIRE_COLOR} strokeWidth={WIRE_WIDTH} />
+      <Path d={rightCurve} fill="none" stroke={WIRE_COLOR} strokeWidth={WIRE_WIDTH} />
       
       {/* Tag de endereçamento */}
       <SvgText 
         x={midX} 
         y={midY - arcHeight - 8} 
         fontSize={12} 
-        fill={GEO.TEXT_COLOR} 
+        fill={TEXT_COLOR} 
         textAnchor="middle" 
         fontWeight="700"
       >

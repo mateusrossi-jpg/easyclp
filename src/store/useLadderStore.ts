@@ -285,7 +285,6 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
     },
 
     clearElement: (elementId) => {
-      get().saveHistory();
       triggerLayoutAnimation();
       const element = get().elements[elementId];
       if (!element) return;
@@ -521,8 +520,22 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
           const nextVariables = { ...get().variables };
           Object.keys(nextElements).forEach(k => {
              const el = nextElements[k];
-             if ((el.type === 'OTE' || el.type === 'TON') && el.address && nextVariables[el.address]) {
-                nextVariables[el.address] = { ...nextVariables[el.address], value: false };
+             if (el.address && nextVariables[el.address]) {
+                if (el.type === 'OTE') {
+                   nextVariables[el.address] = { ...nextVariables[el.address], value: false };
+                } else if (el.type === 'TON') {
+                   const oldVal = nextVariables[el.address].value;
+                   nextVariables[el.address] = { 
+                     ...nextVariables[el.address], 
+                     value: { ...oldVal, acc: 0, dn: false, tt: false } 
+                   };
+                } else if (el.type === 'CTU') {
+                   const oldVal = nextVariables[el.address].value;
+                   nextVariables[el.address] = { 
+                     ...nextVariables[el.address], 
+                     value: { ...oldVal, acc: 0, dn: false } 
+                   };
+                }
              }
           });
 
@@ -534,51 +547,51 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
     addRung: () => {
       get().saveHistory();
       triggerLayoutAnimation();
-      set((state) => {
-        const order = Object.keys(state.rungs).length;
-        const newRungData = createEmptyRung(order);
-        
-        setTimeout(() => {
-          if (get().highlightedRungId === newRungData.rung.id) {
-            set({ highlightedRungId: null });
-          }
-        }, 1000);
-
-        return {
-          rungs: { ...state.rungs, [newRungData.rung.id]: newRungData.rung },
-          elements: { ...state.elements, ...newRungData.elements },
-          highlightedRungId: newRungData.rung.id,
-        };
-      });
-    },
-
-    addRungAfter: (rungId) => {
-      get().saveHistory();
-      triggerLayoutAnimation();
-      set((state) => {
-        const anchorRung = state.rungs[rungId];
-        if (!anchorRung) return state;
-
-        const newRungData = createEmptyRung(anchorRung.order + 1);
-        const shiftedRungs = Object.fromEntries(
-          Object.values(state.rungs).map(rung => [
-            rung.id,
-            rung.order > anchorRung.order ? { ...rung, order: rung.order + 1 } : rung,
-          ])
-        ) as Record<string, Rung>;
+      
+      const state = get();
+      const order = Object.keys(state.rungs).length;
+      const newRungData = createEmptyRung(order);
+      
+      set((state) => ({
+        rungs: { ...state.rungs, [newRungData.rung.id]: newRungData.rung },
+        elements: { ...state.elements, ...newRungData.elements },
+        highlightedRungId: newRungData.rung.id,
+      }));
 
       setTimeout(() => {
         if (get().highlightedRungId === newRungData.rung.id) {
           set({ highlightedRungId: null });
         }
       }, 1000);
+    },
 
-        return {
-          rungs: resequenceRungs({ ...shiftedRungs, [newRungData.rung.id]: newRungData.rung }),
-          elements: { ...state.elements, ...newRungData.elements },
+    addRungAfter: (rungId) => {
+      get().saveHistory();
+      triggerLayoutAnimation();
+      
+      const state = get();
+      const anchorRung = state.rungs[rungId];
+      if (!anchorRung) return;
+
+      const newRungData = createEmptyRung(anchorRung.order + 1);
+      const shiftedRungs = Object.fromEntries(
+        Object.values(state.rungs).map(rung => [
+          rung.id,
+          rung.order > anchorRung.order ? { ...rung, order: rung.order + 1 } : rung,
+        ])
+      ) as Record<string, Rung>;
+
+      set((state) => ({
+        rungs: resequenceRungs({ ...shiftedRungs, [newRungData.rung.id]: newRungData.rung }),
+        elements: { ...state.elements, ...newRungData.elements },
         highlightedRungId: newRungData.rung.id,
-        };
-      });
+      }));
+
+      setTimeout(() => {
+        if (get().highlightedRungId === newRungData.rung.id) {
+          set({ highlightedRungId: null });
+        }
+      }, 1000);
     },
 
     removeRung: (rungId) => {

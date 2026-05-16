@@ -1,8 +1,12 @@
 import React from 'react';
 import { LayoutChangeEvent, PanResponder, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { LADDER_INTERNAL_WIDTH, LadderRenderer } from './LadderRenderer';
+import { Dimensions, LayoutChangeEvent, PanResponder, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { getElementX, LADDER_INTERNAL_WIDTH, LadderRenderer } from './LadderRenderer';
+import { getBranchY, getRungHeight, LADDER_GEOMETRY as GEO } from '../consts/ladderGeometry';
 import { useLadderStore } from '../store/useLadderStore';
 import { ActiveTool, EditorInteractionMode, WorkspaceMode } from '../types';
+import { ActiveTool, EditorInteractionMode, LadderElement, WorkspaceMode } from '../types';
 
 const BOTTOM_CONTROL_SPACE = 192;
 const MIN_CONTAINER_WIDTH = 1;
@@ -27,6 +31,51 @@ interface LadderCanvasProps {
   onBranchPointPress: (column: number) => void;
 }
 
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+const calculateHitZone = (moveY: number, canvasX: number, canvasY: number, state: any, scale: number) => {
+  // Lixeira / Trash Zone agora é detectada na parte inferior absoluta da tela
+  if (state.dragState.draggedElementId && moveY > SCREEN_HEIGHT - 120) {
+    return 'TRASH';
+  }
+
+  const colWidth = (GEO as any).columnWidth || 60;
+  const rHeight = (GEO as any).rungHeight || (GEO as any).rungBaseHeight || 92;
+
+  const rungs = Object.values(state.rungs).sort((a: any, b: any) => a.order - b.order);
+  let currentY = GEO.topPadding;
+  
+  for (const rung of rungs) {
+    const rungElements = rung.elementIds.map((id: string) => state.elements[id]).filter(Boolean);
+    const height = getRungHeight(rungElements);
+    
+    const scaledY = currentY * scale;
+    const scaledHeight = height * scale;
+
+    if (canvasY >= scaledY && canvasY <= scaledY + scaledHeight) {
+      const isResizing = state.dragState.tool === 'RESIZE_BRANCH_START' || state.dragState.tool === 'RESIZE_BRANCH_END';
+      
+      for (const el of rungElements) {
+        if (el.type === 'EMPTY' || isResizing) {
+          const elX = getElementX(el as LadderElement);
+          const elY = (el.branchIndex || 0) > 0 ? getBranchY(currentY, el.branchIndex) : currentY;
+          
+          if (canvasX >= elX * scale && canvasX <= (elX + colWidth) * scale && canvasY >= elY * scale && canvasY <= (elY + rHeight) * scale) {
+            return el.id;
+          }
+        }
+      }
+      
+      if (canvasX >= GEO.leftRailX * scale && canvasX <= GEO.rightRailX * scale) {
+        return rung.id;
+      }
+      return null;
+    }
+    currentY += height;
+  }
+  return null;
+};
+
 export const LadderCanvas = React.memo(React.forwardRef<LadderCanvasHandle, LadderCanvasProps>(({
   mode,
   selectedElementId,
@@ -49,6 +98,7 @@ export const LadderCanvas = React.memo(React.forwardRef<LadderCanvasHandle, Ladd
   const hasSelectedTool = !!useLadderStore(state => state.selectedTool);
   const scrollEnabled = !isDragging && !hasSelectedTool;
   const touchOffset = React.useRef({ x: 0, y: 0 });
+  const scaleRef = React.useRef(1);
 
   const panResponder = React.useMemo(() => PanResponder.create({
     onStartShouldSetPanResponder: () => {
@@ -80,6 +130,7 @@ export const LadderCanvas = React.memo(React.forwardRef<LadderCanvasHandle, Ladd
             break;
           }
         }
+        const hitId = calculateHitZone(pageY, locationX, locationY, state, scaleRef.current);
         state.setHoveredDropZone(hitId);
       }
     },
@@ -100,6 +151,7 @@ export const LadderCanvas = React.memo(React.forwardRef<LadderCanvasHandle, Ladd
           break;
         }
       }
+      const hitId = calculateHitZone(moveY, canvasX, canvasY, state, scaleRef.current);
       state.setHoveredDropZone(hitId);
     },
     onPanResponderRelease: () => {
@@ -131,6 +183,10 @@ export const LadderCanvas = React.memo(React.forwardRef<LadderCanvasHandle, Ladd
   const scale = Math.min(fitScale * zoomMultiplier, 1);
 
   const scaledContentWidth = contentSize.width * scale;
+
+  React.useEffect(() => {
+    scaleRef.current = scale;
+  }, [scale]);
 
   const resetViewport = React.useCallback(() => {
     horizontalScrollRef.current?.scrollTo({ x: 0, animated: true });

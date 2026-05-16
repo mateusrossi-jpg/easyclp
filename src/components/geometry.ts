@@ -1,8 +1,2 @@
-export const GEO = {
-  RUNG_HEIGHT: 100,
-  BLOCK_WIDTH: 80,
-  BLOCK_HEIGHT: 60,
-  WIRE_COLOR: '#404040',
-  TEXT_COLOR: '#A3A3A3',
-  WIRE_WIDTH: 2,
-} as const;
+// Este arquivo foi esvaziado pois trata-se de "dead code" que duplica
+// as constantes já existentes em `ladderGeometry.ts`. Pode ser removido com segurança.
