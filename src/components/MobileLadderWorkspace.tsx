@@ -19,7 +19,6 @@ import { ComponentMenu } from './ComponentMenu';
 import { ElementEditorModal } from './ElementEditorModal';
 import { LadderCanvas, LadderCanvasHandle } from './LadderCanvas';
 import { DragOverlay } from './DragOverlay';
-import { SimulationControls } from './SimulationControls';
 import { TopActionBar } from './TopActionBar';
 import { ProjectManager } from './ProjectManager';
 import { useLadderStore } from '../store/useLadderStore';
@@ -407,7 +406,7 @@ export const MobileLadderWorkspace = React.memo(() => {
   const showTrashZone = dragState.isDragging && dragState.draggedElementId;
   const showRungMenu = mode === 'edit' && !activeTool && !!selectedRungId && !selectedElementId;
   const showElementMenu = mode === 'edit' && !activeTool && !!selectedElementId;
-  const showWorkspaceHint = !showRungMenu && !showElementMenu;
+  const showWorkspaceHint = mode === 'edit' && !showRungMenu && !showElementMenu;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -449,44 +448,31 @@ export const MobileLadderWorkspace = React.memo(() => {
           />
         </View>
 
-      {!showTrashZone && (
+      {!showTrashZone && mode === 'edit' && (
         <>
           {showWorkspaceHint && (
             <View style={[
               styles.workspaceHint,
               (selectedElementId || selectedRungId || activeTool) && styles.workspaceHintActive,
-              mode === 'simulate' && styles.workspaceHintSimulate,
             ]}>
               <View style={[
                 styles.workspaceHintDot,
-                (selectedElementId || selectedRungId || activeTool || isSimulating) && styles.workspaceHintDotActive,
+                (selectedElementId || selectedRungId || activeTool) && styles.workspaceHintDotActive,
               ]} />
               <Text style={styles.workspaceHintText} numberOfLines={1}>{workspaceHint}</Text>
             </View>
           )}
 
-          {mode === 'edit' && (
-            <TouchableOpacity
-              style={[styles.componentFab, activeTool && styles.componentFabCancel]}
-              activeOpacity={0.78}
-              onPress={handleComponentFabPress}
-            >
-              {activeTool ? <X size={21} color="#FFFFFF" strokeWidth={2.5} /> : <Plus size={22} color="#FFFFFF" strokeWidth={2.4} />}
-              <Text style={styles.componentFabText} numberOfLines={1}>
-                {activeToolLabel ? `Cancelar ${activeToolLabel}` : 'Componentes'}
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {mode === 'simulate' && (
-            <SimulationControls
-              isSimulating={isSimulating}
-              mode={mode}
-              onToggle={handleToggleSimulation}
-              activeSignalCount={activeSignalCount}
-              totalSignalCount={variableList.length}
-            />
-          )}
+          <TouchableOpacity
+            style={[styles.componentFab, activeTool && styles.componentFabCancel]}
+            activeOpacity={0.78}
+            onPress={handleComponentFabPress}
+          >
+            {activeTool ? <X size={21} color="#FFFFFF" strokeWidth={2.5} /> : <Plus size={22} color="#FFFFFF" strokeWidth={2.4} />}
+            <Text style={styles.componentFabText} numberOfLines={1}>
+              {activeToolLabel ? `Cancelar ${activeToolLabel}` : 'Componentes'}
+            </Text>
+          </TouchableOpacity>
         </>
       )}
 

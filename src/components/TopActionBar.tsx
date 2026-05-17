@@ -53,7 +53,7 @@ export const TopActionBar = React.memo(({
   const { width } = useWindowDimensions();
   const compact = width < 390;
   const subtitle = mode === 'simulate'
-    ? isSimulating ? 'Simulação rodando' : 'Simulação parada'
+    ? isSimulating ? 'Simulação em execução' : 'Simulação pausada'
     : projectName || 'Editor Ladder';
 
   return (
@@ -77,6 +77,13 @@ export const TopActionBar = React.memo(({
           <Text style={[styles.topRunText, compact && styles.topRunTextCompact]}>{isSimulating ? 'Parar' : 'Iniciar'}</Text>
         </TouchableOpacity>
       </View>
+
+      {mode === 'simulate' && isSimulating && (
+        <View style={styles.simHintBanner}>
+          <View style={styles.simHintDot} />
+          <Text style={styles.simHintText}>Toque em contatos BOOL para alternar entradas</Text>
+        </View>
+      )}
 
       <View style={styles.modeSwitch}>
         <TouchableOpacity
@@ -224,6 +231,29 @@ const styles = StyleSheet.create({
   },
   topRunTextCompact: {
     fontSize: 13,
+  },
+  simHintBanner: {
+    minHeight: 34,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    borderRadius: 11,
+    backgroundColor: '#EEF8F1',
+    borderWidth: 1,
+    borderColor: 'rgba(46, 164, 97, 0.22)',
+  },
+  simHintDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#2EAD5B',
+  },
+  simHintText: {
+    color: '#14532D',
+    fontSize: 11,
+    fontWeight: '800',
   },
   modeSwitch: {
     minHeight: 44,
