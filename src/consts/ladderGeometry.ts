@@ -8,38 +8,38 @@ import { THEME_TOKENS } from './themeTokens';
 export const LADDER_GEOMETRY = {
   // Global Shell
   leftRailX: 48,
-  rightRailX: 1040, // Expanded for breathing room
-  railWidth: 3,
+  rightRailX: 1160, // Further expanded for better spacing
+  railWidth: 4,     // Slightly thicker for premium feel
   topPadding: 44,
   
   // Grid System
   columnCount: 12,
-  columnWidth: 80, // (1040 - 48 - 48) / 12 ~= 78.6, let's use 80 for more space
+  columnWidth: 90,  // (1160 - 48 - 48) / 12 ~= 88.6 -> 90 for rounded math
   
   // Rung Density
-  rungHeight: 124, // Taller for better touch target
-  branchGap: 112,
-  centerY: 62,
+  rungHeight: 140,  // Taller rungs for better touch targets and vertical breathing room
+  branchGap: 124,
+  centerY: 70,      // Adjusted for new rungHeight
   
   // Symbol Proportions
-  contactWidth: 34,
-  contactHeight: 32,
-  coilWidth: 46,
-  coilHeight: 34,
+  contactWidth: 40,
+  contactHeight: 36,
+  coilWidth: 52,
+  coilHeight: 38,
   
-  // Function Blocks (Industrial Proportions)
-  blockWidth: 156, // Ocupa ~2 colunas com folga
-  blockHeight: 90,
-  blockHeaderHeight: 24,
+  // Function Blocks (Large and Legible)
+  blockWidth: 170,  // Occupies almost 2 full columns (90*2=180)
+  blockHeight: 104,
+  blockHeaderHeight: 28,
   
   // Comparators (Technical)
-  compareWidth: 64,
-  compareHeight: 36,
+  compareWidth: 72,
+  compareHeight: 40,
   
   // Visual Weight
-  lineWidth: 1.5,
-  activeLineWidth: 3,
-  labelFontSize: 12, // Increased for readability
+  lineWidth: 1.8,
+  activeLineWidth: 3.5,
+  labelFontSize: 13, // Larger labels
   
   // Palette
   colorCanvas: THEME_TOKENS.color.canvas,
