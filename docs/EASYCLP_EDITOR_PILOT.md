@@ -1,38 +1,42 @@
-# EasyCLP Editor Pilot Documentation
+# EasyCLP — Editor Ladder Pilot
 
-## Objective
-Stabilize the main Ladder editor screen with a mobile-first premium experience, ensuring visual consistency, technical precision, and a clean interface.
+## Objetivo
+Estabilizar a tela principal do editor Ladder mobile-first e polir a UX.
 
-## UI/UX Decisions
-- **Mobile-First Grid**: Switched to a standardized 12-column grid system for all rungs.
-- **Airy Rungs**: Increased rung heights and branch gaps to ensure a comfortable touch experience.
-- **Premium Rails**: Added depth and subtle shadows to the bus bars (rails) to give an industrial yet modern look.
-- **Clean Palette**: Uses off-white/canvas colors for the editor area to reduce eye strain.
-- **Consistent Alignment**: Removed hardcoded element positions in favor of a strictly column-based calculation (`getElementX`).
+## Decisões de UX
+- Mobile-first com grid rígido de 12 colunas.
+- Inserção por seleção + menu, não apenas drag/drop.
+- Rungs com altura dinâmica e respiro superior para touch.
+- Branch paralelo empurra rungs seguintes e reconecta inteligentemente.
+- Botão "+ Componentes" e status flutuam de forma que o conteúdo abaixo não fique inacessível (scroll bottom padding aplicado).
 
-## Rung Structure
-Each rung is now rendered within a 12-column grid:
-- **Left Rail**: Start of power.
-- **Right Rail**: End of power (where coils are usually placed).
-- **Columns**: 12 slots for contacts, blocks, and coils.
-- **Vertical Growth**: Parallel branches automatically increase the rung's height and maintain vertical alignment without overlapping other rungs.
+## Estrutura visual
+- Header premium exibindo o nome do Projeto ativo.
+- Canvas Ladder expandido (legibilidade priorizada).
+- Barramentos (rails) com efeito de profundidade.
+- Rungs com documentação (comments) em itálico.
+- Componentes e blocos maiores para interações touch confortáveis.
+- Bottom sheet de componentes incluindo categoria "⭐ Favoritos".
+- Status de simulação com feedback de estado ativo.
 
-## Component Insertion Flow
-1. **Tap/Select**: User taps a rung or an empty cell.
-2. **Component Menu**: User taps "+ Componentes" to open the bottom sheet.
-3. **Insert**: Selecting a component inserts it into the selected point.
-4. **Drag & Drop**: Supported as a secondary interaction method for desktop and advanced mobile users.
+## Fluxo de uso
+1. Criar rung.
+2. Adicionar documentação (via menu de contexto da Rung).
+3. Selecionar ponto de inserção.
+4. Abrir + Componentes.
+5. Inserir componente.
+6. Adicionar paralelo.
+7. Iniciar/parar simulação básica.
+8. Salvar/Carregar via Gerenciador de Projetos.
+9. Exportar projeto (JSON).
 
-## Parallel Branch Logic
-- Parallel branches are tied to the rung.
-- They connect vertical lines at the center of the columns.
-- Resizing handles are available in "Edit" mode to adjust the branch's span.
+## Polimento mobile do canvas
+- **Escala e Grid**: O `rightRailX` foi expandido de 920 para 1040, permitindo um `columnWidth` de 80. Isso evita a sensação de "espremido". A altura padrão das rungs foi ajustada para 124 para melhorar as hit-zones de touch.
+- **TON e CTU**: Os blocos agora ocupam 156 de largura e 90 de altura. Os textos internos foram ampliados para garantir a legibilidade.
+- **Labels e Textos**: As fontes de `address` e parâmetros internos ganharam peso e tamanho para evitar poluição visual em telas de alta densidade.
+- **Múltiplos Projetos**: Implementada interface nativa para lidar com a alternância fluida entre lógicas.
 
-## Pending for Simulation
-- The simulation engine (`ladderEngine.ts`) is functional but may require further refinement for complex nested branches.
-- Real-time visualization of energized paths is implemented but needs testing with multi-level parallel branches.
-
-## Key Files
-- `src/consts/ladderGeometry.ts`: Central source of truth for all measurements.
-- `src/components/LadderRenderer.tsx`: Main SVG rendering engine.
-- `src/store/useLadderStore.ts`: Global state and business logic.
+## Pendências (Próximos Passos Futuros)
+- Motor completo de simulação (avançar blocos PID, Math).
+- Validação Ladder avançada (alertar caminhos abertos).
+- Exportação nativa via Share API no Mobile (atualmente via console.log para testes Web).
