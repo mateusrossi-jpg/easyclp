@@ -36,6 +36,11 @@ Estabilizar a tela principal do editor Ladder mobile-first e polir a UX.
 - **Labels e Textos**: As fontes de `address` e parâmetros internos ganharam peso e tamanho para evitar poluição visual em telas de alta densidade.
 - **Múltiplos Projetos**: Implementada interface nativa para lidar com a alternância fluida entre lógicas.
 
+## Modo Simular limpo
+- **Interface Focada**: Removidos botões redundantes e cards flutuantes que cobriam o Ladder durante a simulação.
+- **Status Consolidado**: O status da simulação e as instruções de uso ("Toque em contatos BOOL...") foram movidos para a área superior (Header), liberando 100% da área do canvas para monitoramento.
+- **Ocultação de Edição**: Botões de inserção e dicas de edição são automaticamente ocultados ao entrar no modo Simular.
+
 ## Pendências (Próximos Passos Futuros)
 - Motor completo de simulação (avançar blocos PID, Math).
 - Validação Ladder avançada (alertar caminhos abertos).
