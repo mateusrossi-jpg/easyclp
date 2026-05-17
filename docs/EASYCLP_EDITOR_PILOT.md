@@ -12,9 +12,9 @@ Estabilizar a tela principal do editor Ladder mobile-first e polir a UX.
 
 ## Estrutura visual
 - Header premium exibindo o nome do Projeto ativo.
-- Canvas Ladder expandido (legibilidade priorizada).
-- Barramentos (rails) com efeito de profundidade.
-- Rungs com documentação (comments) em itálico.
+- Canvas Ladder expandido (legibilidade priorizada sobre visão geral).
+- Barramentos (rails) com efeito de profundidade e espessura industrial.
+- Rungs com documentação (comments) em itálico e maior peso.
 - Componentes e blocos maiores para interações touch confortáveis.
 - Bottom sheet de componentes incluindo categoria "⭐ Favoritos".
 - Status de simulação com feedback de estado ativo.
@@ -31,17 +31,19 @@ Estabilizar a tela principal do editor Ladder mobile-first e polir a UX.
 9. Exportar projeto (JSON).
 
 ## Polimento mobile do canvas
-- **Escala e Grid**: O `rightRailX` foi expandido de 920 para 1040, permitindo um `columnWidth` de 80. Isso evita a sensação de "espremido". A altura padrão das rungs foi ajustada para 124 para melhorar as hit-zones de touch.
-- **TON e CTU**: Os blocos agora ocupam 156 de largura e 90 de altura. Os textos internos foram ampliados para garantir a legibilidade.
-- **Labels e Textos**: As fontes de `address` e parâmetros internos ganharam peso e tamanho para evitar poluição visual em telas de alta densidade.
-- **Múltiplos Projetos**: Implementada interface nativa para lidar com a alternância fluida entre lógicas.
+- **Escala e Grid**: O `rightRailX` foi expandido para 1160, com `columnWidth` de 90. A altura padrão das rungs subiu para 140. Essa escala "pesada" garante legibilidade perfeita em qualquer celular moderno.
+- **Legibilidade dos Blocos**:
+  - **TON e CTU**: Blocos agora medem 170x104. Textos de parâmetros (IN, PT, CU, ACC...) agora usam fonte tamanho 12 e peso 900.
+  - **Cabeçalhos**: Títulos TON/CTU ampliados para tamanho 14, com contraste máximo.
+- **Labels e Textos**: `address` dos componentes agora usa tamanho 13, facilitando a leitura de tags complexas.
+- **Múltiplos Projetos**: Interface nativa estabilizada.
 
 ## Modo Simular limpo
-- **Interface Focada**: Removidos botões redundantes e cards flutuantes que cobriam o Ladder durante a simulação.
-- **Status Consolidado**: O status da simulação e as instruções de uso ("Toque em contatos BOOL...") foram movidos para a área superior (Header), liberando 100% da área do canvas para monitoramento.
-- **Ocultação de Edição**: Botões de inserção e dicas de edição são automaticamente ocultados ao entrar no modo Simular.
+- **Interface Focada**: Removidos botões redundantes e cards flutuantes.
+- **Status Consolidado**: O status e instruções foram movidos para o Header.
+- **Ocultação de Edição**: Interface de construção some automaticamente ao simular.
 
 ## Pendências (Próximos Passos Futuros)
 - Motor completo de simulação (avançar blocos PID, Math).
 - Validação Ladder avançada (alertar caminhos abertos).
-- Exportação nativa via Share API no Mobile (atualmente via console.log para testes Web).
+- Exportação nativa via Share API no Mobile.
