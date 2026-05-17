@@ -156,7 +156,12 @@ export const LadderCanvas = React.memo(React.forwardRef<LadderCanvasHandle, Ladd
   const fitScale = React.useMemo(() => {
     const availableWidth = Math.max(containerSize.width, MIN_CONTAINER_WIDTH);
     const contentWidth = Math.max(contentSize.width, MIN_CONTAINER_WIDTH);
-    return Math.min(availableWidth / contentWidth, 1);
+    const baseScale = availableWidth / contentWidth;
+    
+    // On mobile, don't shrink below a readable threshold (e.g. 0.45)
+    // This forces internal horizontal scroll but preserves legibility.
+    const minReadableScale = Platform.OS === 'web' ? 0.2 : 0.45;
+    return Math.max(Math.min(baseScale, 1), minReadableScale);
   }, [containerSize.width, contentSize.width]);
 
   const scale = Math.min(fitScale * zoomMultiplier, 1);

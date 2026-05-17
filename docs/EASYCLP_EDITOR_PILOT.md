@@ -36,7 +36,12 @@ Estabilizar a tela principal do editor Ladder mobile-first e polir a UX.
   - **TON e CTU**: Blocos agora medem 170x104. Textos de parâmetros (IN, PT, CU, ACC...) agora usam fonte tamanho 12 e peso 900.
   - **Cabeçalhos**: Títulos TON/CTU ampliados para tamanho 14, com contraste máximo.
 - **Labels e Textos**: `address` dos componentes agora usa tamanho 13, facilitando a leitura de tags complexas.
+- **Truncamento de Tags**: Endereços muito longos são truncados elegantemente para evitar poluição visual.
 - **Múltiplos Projetos**: Interface nativa estabilizada.
+
+## Legibilidade mobile dos blocos
+- **Prioridade de Leitura**: No mobile, o sistema agora impede que a escala caia abaixo de 0.45. Isso significa que o editor favorece a leitura dos componentes, ativando scroll horizontal interno se a rung for muito larga, em vez de diminuir os blocos até ficarem ilegíveis.
+- **Ajuste de Segurança**: Blocos largos (como TON) próximos ao barramento direito são automaticamente reposicionados (nudge) para a esquerda para evitar que sejam cortados ou encostem no rail.
 
 ## Modo Simular limpo
 - **Interface Focada**: Removidos botões redundantes e cards flutuantes.

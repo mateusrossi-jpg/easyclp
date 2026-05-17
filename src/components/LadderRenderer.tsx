@@ -9,7 +9,12 @@ import { LadderBlockSvg } from './LadderBlocks';
 import { ActiveTool, EditorInteractionMode, ElementType, LadderElement, WorkspaceMode, DropZone } from '../types';
 
 const COIL_TYPES: ElementType[] = ['OTE', 'OTL', 'OTU'];
-export const LADDER_INTERNAL_WIDTH = 1280; // Expanded to fit the new 1160 rightRailX + padding
+export const LADDER_INTERNAL_WIDTH = 1280;
+
+const truncateAddress = (address: string, maxLength: number = 10) => {
+  if (!address) return '';
+  return address.length > maxLength ? address.substring(0, maxLength - 2) + '..' : address;
+};
 
 const formatBlockValue = (value: unknown) => {
   const numericValue = Number(value);
@@ -124,8 +129,14 @@ const RungRow = React.memo(({
 
     const symbolWidth = (el.type === 'TON' || el.type === 'CTU') ? GEO.blockWidth : GEO.columnWidth;
 
+    // Safety check: nudge blocks to the left if they hit the right rail
+    let adjustedX = x;
+    if (x + symbolWidth > GEO.rightRailX - 10) {
+      adjustedX = GEO.rightRailX - symbolWidth - 10;
+    }
+
     return (
-      <G key={el.id} transform={`translate(${x}, ${y})`}>
+      <G key={el.id} transform={`translate(${adjustedX}, ${y})`}>
         {el.type !== 'EMPTY' && (
           <Rect
             x={6}
@@ -144,7 +155,9 @@ const RungRow = React.memo(({
         )}
         {Comp}
         {!['GEQ', 'LEQ', 'EQU', 'NEQ', 'GRT', 'LSS', 'TON', 'CTU', 'EMPTY'].includes(el.type) && (
-          <SvgText x={GEO.columnWidth / 2} y={24} fontSize={GEO.labelFontSize} fontWeight="900" textAnchor="middle" fill={GEO.colorText} fontFamily="monospace">{el.address}</SvgText>
+          <SvgText x={GEO.columnWidth / 2} y={24} fontSize={GEO.labelFontSize} fontWeight="900" textAnchor="middle" fill={GEO.colorText} fontFamily="monospace">
+            {truncateAddress(el.address, 12)}
+          </SvgText>
         )}
         <Rect x={0} y={0} width={symbolWidth} height={GEO.rungHeight} fill="transparent" onPress={() => onElementPress(el.id)}
           onLongPress={(e) => {
