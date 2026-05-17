@@ -13,15 +13,14 @@ import {
 } from 'react-native';
 import {
   FileCode,
+  FileDown,
   FolderOpen,
-  MoreVertical,
   Plus,
-  Save,
   Trash2,
   X,
-  Edit3,
   Calendar,
 } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLadderStore } from '../store/useLadderStore';
 import { ProjectMetadata } from '../types';
 import { THEME_TOKENS } from '../consts/themeTokens';
@@ -66,6 +65,22 @@ export const ProjectManager = React.memo(({ visible, onClose }: ProjectManagerPr
     onClose();
   }, [loadFromStorage, onClose]);
 
+  const handleExport = useCallback(async (project: ProjectMetadata) => {
+    try {
+      const data = await AsyncStorage.getItem(`@easyclp_project_${project.id}`);
+      if (data) {
+        if (Platform.OS === 'web') {
+          console.log('Project Data:', data);
+          alert('Dados do projeto copiados para o console (F12). Em breve suporte a download de arquivo!');
+        } else {
+          Alert.alert('Exportar Projeto', 'A funcionalidade de compartilhamento nativo será implementada na próxima versão. Por enquanto, os dados estão seguros no dispositivo.');
+        }
+      }
+    } catch (e) {
+      console.error('Export failed', e);
+    }
+  }, []);
+
   const handleDelete = useCallback((project: ProjectMetadata) => {
     const performDelete = () => deleteProject(project.id);
 
@@ -109,6 +124,14 @@ export const ProjectManager = React.memo(({ visible, onClose }: ProjectManagerPr
           </View>
         </TouchableOpacity>
         
+        <TouchableOpacity 
+          style={styles.actionButton} 
+          onPress={() => handleExport(item)}
+          activeOpacity={0.6}
+        >
+          <FileDown size={18} color="#6B7280" />
+        </TouchableOpacity>
+
         <TouchableOpacity 
           style={styles.deleteButton} 
           onPress={() => handleDelete(item)}
@@ -306,6 +329,13 @@ const styles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  actionButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 4,
   },
   emptyState: {
     alignItems: 'center',

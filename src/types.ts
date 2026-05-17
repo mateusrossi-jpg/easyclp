@@ -71,6 +71,7 @@ export interface Rung {
   elementIds: string[];
   isPowered: boolean;
   order: number;
+  comment?: string;
 }
 
 export interface ProjectMetadata {

@@ -64,6 +64,7 @@ interface LadderStoreState extends NormalizedState {
   addVariable: (id: string, type: VariableType, initialValue?: any) => void;
   updateVariable: (id: string, updates: Partial<Variable>) => void;
   removeVariable: (id: string) => void;
+  updateRung: (rungId: string, updates: Partial<Rung>) => void;
   createBranch: (elementId: string) => void;
   createBranchBetween: (rungId: string, startColumn: number, endColumn: number) => void;
   resizeBranch: (rungId: string, branchIndex: number, targetColumn: number, isStart: boolean) => void;
@@ -599,6 +600,20 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
         const nextVariables = { ...state.variables };
         delete nextVariables[id];
         return { variables: nextVariables };
+      });
+    },
+
+    updateRung: (rungId, updates) => {
+      get().saveHistory();
+      set((state) => {
+        const rung = state.rungs[rungId];
+        if (!rung) return state;
+        return {
+          rungs: {
+            ...state.rungs,
+            [rungId]: { ...rung, ...updates },
+          },
+        };
       });
     },
 

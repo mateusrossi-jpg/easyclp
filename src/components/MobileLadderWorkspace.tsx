@@ -171,6 +171,32 @@ export const MobileLadderWorkspace = React.memo(() => {
     )) || null;
   }, [getRungElements]);
 
+  const handleEditRungComment = useCallback((rungId: string) => {
+    const rung = rungs[rungId];
+    if (!rung) return;
+    
+    const performUpdate = (text: string) => {
+      useLadderStore.getState().updateRung(rungId, { comment: text });
+    };
+
+    if (Platform.OS !== 'web') {
+      Alert.prompt(
+        'Documentação da Rung',
+        'Insira uma descrição para esta lógica:',
+        [
+          { text: 'Remover', style: 'destructive', onPress: () => performUpdate('') },
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Salvar', onPress: (text?: string) => performUpdate(text || '') }
+        ],
+        'plain-text',
+        rung.comment
+      );
+    } else {
+      const newComment = prompt('Descrição da Rung:', rung.comment);
+      if (newComment !== null) performUpdate(newComment);
+    }
+  }, [rungs]);
+
   const getBranchEndColumn = useCallback((element: LadderElement) => {
     const candidates = getRungElements(element.rungId)
       .filter(candidate => candidate.branchIndex === 0 && candidate.type !== 'EMPTY' && candidate.column > element.column)
@@ -475,6 +501,10 @@ export const MobileLadderWorkspace = React.memo(() => {
               <Text style={[styles.rungActionText, interactionMode.startsWith('choosing-branch') && styles.rungActionTextActive]}>
                 {interactionMode === 'choosing-branch-end' ? 'Fim do paralelo' : 'Paralelo'}
               </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.rungAction} activeOpacity={0.76} onPress={() => handleEditRungComment(selectedRungId!)}>
+              <PenLine size={17} color="#111827" strokeWidth={2.2} />
+              <Text style={styles.rungActionText}>Documentar</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.rungAction} activeOpacity={0.76} onPress={handleConfigureRung}>
               <Settings2 size={17} color="#111827" strokeWidth={2.2} />

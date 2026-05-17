@@ -10,6 +10,13 @@ const COMPONENT_GROUPS: Array<{
   items: Array<{ type: Exclude<ActiveTool, null>; title: string; description: string; symbol: string }>;
 }> = [
   {
+    title: '⭐ Favoritos',
+    items: [
+      { type: 'XIC', title: 'XIC', description: 'Contato NA', symbol: '-| |-' },
+      { type: 'OTE', title: 'OTE', description: 'Saída comum', symbol: '-( )-' },
+    ],
+  },
+  {
     title: 'Contatos',
     items: [
       { type: 'XIC', title: 'XIC', description: 'Contato normalmente aberto', symbol: '-| |-' },

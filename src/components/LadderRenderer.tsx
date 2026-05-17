@@ -2,6 +2,7 @@ import React from 'react';
 import { Animated } from 'react-native';
 import Svg, { Circle, Line, G, Text as SvgText, Rect } from 'react-native-svg';
 import { getBranchY, getRungHeight, getRungRowCount, getElementX, LADDER_GEOMETRY as GEO } from '../consts/ladderGeometry';
+import { THEME_TOKENS } from '../consts/themeTokens';
 import { useLadderStore } from '../store/useLadderStore';
 import { LadderContactNO, LadderContactNC, LadderCoil, CompareContactSvg } from './LadderSymbols';
 import { LadderBlockSvg } from './LadderBlocks';
@@ -173,6 +174,11 @@ const RungRow = React.memo(({
       )}
       <Rect x={GEO.leftRailX} y={localY} width={GEO.rightRailX - GEO.leftRailX} height={rungHeight} fill="transparent" onPress={() => onRungPress(rung.id)} />
       
+      {/* Rung Comment */}
+      {rung.comment && (
+        <SvgText x={GEO.leftRailX} y={localY + 12} fontSize={10} fontStyle="italic" fill={THEME_TOKENS.color.textMuted} fontWeight="600">{rung.comment}</SvgText>
+      )}
+
       {/* Rung Index Badge */}
       <Rect x={GEO.leftRailX - 34} y={localY + GEO.centerY - 11} width={22} height={22} rx={7} fill="#FFFFFF" stroke="#DDE7DD" strokeWidth={1} vectorEffect="non-scaling-stroke" />
       <SvgText x={GEO.leftRailX - 23} y={localY + GEO.centerY + 5} fontSize={10} fontWeight="900" textAnchor="middle" fill="#91A098">{rIdx}</SvgText>
