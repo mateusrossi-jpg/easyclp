@@ -8,22 +8,18 @@ import { THEME_TOKENS } from './themeTokens';
 export const LADDER_GEOMETRY = {
   // Global Shell
   leftRailX: 44,
-  rightRailX: 870,
+  rightRailX: 920, // Aumentado para acomodar 12 colunas confortavelmente
   railWidth: 3,
   topPadding: 44,
   
-  // Rung Density
-  rungHeight: 108,
-  branchGap: 96,
-  centerY: 54,
+  // Grid System
+  columnCount: 12,
+  columnWidth: 70, // (920 - 44 - 44) / 12 ~= 69.3
   
-  // Fixed Horizontal Positions (Aproximação por medição visual)
-  firstContactX: 66,
-  compareX: 66,
-  ctuX: 262,
-  tonX: 430,
-  cycleTonX: 306,
-  coilX: 786,
+  // Rung Density
+  rungHeight: 110,
+  branchGap: 100,
+  centerY: 55,
   
   // Symbol Proportions
   contactWidth: 32,
@@ -32,19 +28,18 @@ export const LADDER_GEOMETRY = {
   coilHeight: 32,
   
   // Function Blocks (Industrial Proportions)
-  blockWidth: 152,
-  blockHeight: 76,
-  blockHeaderHeight: 21,
+  blockWidth: 140, // Ocupa ~2 colunas
+  blockHeight: 80,
+  blockHeaderHeight: 22,
   
   // Comparators (Technical)
-  compareWidth: 40,
-  compareHeight: 30,
+  compareWidth: 60,
+  compareHeight: 32,
   
   // Visual Weight
-  lineWidth: 1.45,
-  activeLineWidth: 2.65,
-  columnWidth: 84,
-  labelFontSize: 12,
+  lineWidth: 1.5,
+  activeLineWidth: 3,
+  labelFontSize: 11,
   
   // Palette
   colorCanvas: THEME_TOKENS.color.canvas,
@@ -59,8 +54,8 @@ export const LADDER_GEOMETRY = {
   colorGuide: '#E4ECE4',
   colorSelection: 'rgba(46, 164, 97, 0.10)',
   colorSymbolMuted: '#5F6D65',
-  colorElementPlate: 'rgba(255, 255, 255, 0.76)',
-  colorElementPlateActive: 'rgba(232, 247, 236, 0.88)',
+  colorElementPlate: 'rgba(255, 255, 255, 0.85)',
+  colorElementPlateActive: 'rgba(232, 247, 236, 0.92)',
 };
 
 type LayoutElement = {
@@ -78,4 +73,8 @@ export const getRungHeight = (rungElements: LayoutElement[]) => {
 
 export const getBranchY = (rungY: number, branchIndex: number) => {
   return rungY + branchIndex * LADDER_GEOMETRY.branchGap;
+};
+
+export const getElementX = (column: number) => {
+  return LADDER_GEOMETRY.leftRailX + column * LADDER_GEOMETRY.columnWidth;
 };

@@ -64,8 +64,9 @@ const createEmptyRung = (order: number): { rung: Rung, elements: Record<string, 
   const rungId = uuidv4();
   const elements: Record<string, LadderElement> = {};
   const elementIds: string[] = [];
+  const columnCount = 12; // Standardized to 12
 
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < columnCount; i++) {
     const elId = uuidv4();
     elements[elId] = {
       id: elId,
@@ -129,7 +130,7 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
     const rungId = `rung-${index}`;
     const elementIds: string[] = [];
     
-    const cols = 12;
+    const cols = 12; // Standardized to 12
     for (let col = 0; col < cols; col++) {
       const configs = logic.filter(l => l.col === col);
       if (configs.length === 0) {
@@ -393,8 +394,9 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
 
         const newElements: Record<string, LadderElement> = {};
         const newElementIds: string[] = [];
+        const columnCount = 12;
 
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < columnCount; i++) {
           const elId = uuidv4();
           newElements[elId] = {
             id: elId,

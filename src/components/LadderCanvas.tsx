@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dimensions, LayoutChangeEvent, PanResponder, Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { getElementX, LADDER_INTERNAL_WIDTH, LadderRenderer } from './LadderRenderer';
-import { getBranchY, getRungHeight, LADDER_GEOMETRY as GEO } from '../consts/ladderGeometry';
+import { LADDER_INTERNAL_WIDTH, LadderRenderer } from './LadderRenderer';
+import { getBranchY, getRungHeight, getElementX, LADDER_GEOMETRY as GEO } from '../consts/ladderGeometry';
 import { useLadderStore } from '../store/useLadderStore';
 import { ActiveTool, EditorInteractionMode, LadderElement, Rung, WorkspaceMode } from '../types';
 import { THEME_TOKENS } from '../consts/themeTokens';
@@ -37,8 +37,8 @@ const calculateHitZone = (moveY: number, canvasX: number, canvasY: number, state
     return 'TRASH';
   }
 
-  const colWidth = (GEO as any).columnWidth || 60;
-  const rHeight = (GEO as any).rungHeight || (GEO as any).rungBaseHeight || 92;
+  const colWidth = GEO.columnWidth;
+  const rHeight = GEO.rungHeight;
 
   const rungs = (Object.values(state.rungs) as Rung[]).sort((a, b) => a.order - b.order);
   let currentY = GEO.topPadding;
@@ -55,7 +55,7 @@ const calculateHitZone = (moveY: number, canvasX: number, canvasY: number, state
       
       for (const el of rungElements) {
         if (el.type === 'EMPTY' || isResizing) {
-          const elX = getElementX(el as LadderElement);
+          const elX = getElementX(el.column);
           const elY = (el.branchIndex || 0) > 0 ? getBranchY(currentY, el.branchIndex) : currentY;
           
           if (canvasX >= elX * scale && canvasX <= (elX + colWidth) * scale && canvasY >= elY * scale && canvasY <= (elY + rHeight) * scale) {
