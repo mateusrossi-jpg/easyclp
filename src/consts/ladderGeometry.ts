@@ -7,39 +7,39 @@ import { THEME_TOKENS } from './themeTokens';
  */
 export const LADDER_GEOMETRY = {
   // Global Shell
-  leftRailX: 44,
-  rightRailX: 920, // Aumentado para acomodar 12 colunas confortavelmente
+  leftRailX: 48,
+  rightRailX: 1040, // Expanded for breathing room
   railWidth: 3,
   topPadding: 44,
   
   // Grid System
   columnCount: 12,
-  columnWidth: 70, // (920 - 44 - 44) / 12 ~= 69.3
+  columnWidth: 80, // (1040 - 48 - 48) / 12 ~= 78.6, let's use 80 for more space
   
   // Rung Density
-  rungHeight: 110,
-  branchGap: 100,
-  centerY: 55,
+  rungHeight: 124, // Taller for better touch target
+  branchGap: 112,
+  centerY: 62,
   
   // Symbol Proportions
-  contactWidth: 32,
-  contactHeight: 30,
-  coilWidth: 42,
-  coilHeight: 32,
+  contactWidth: 34,
+  contactHeight: 32,
+  coilWidth: 46,
+  coilHeight: 34,
   
   // Function Blocks (Industrial Proportions)
-  blockWidth: 140, // Ocupa ~2 colunas
-  blockHeight: 80,
-  blockHeaderHeight: 22,
+  blockWidth: 156, // Ocupa ~2 colunas com folga
+  blockHeight: 90,
+  blockHeaderHeight: 24,
   
   // Comparators (Technical)
-  compareWidth: 60,
-  compareHeight: 32,
+  compareWidth: 64,
+  compareHeight: 36,
   
   // Visual Weight
   lineWidth: 1.5,
   activeLineWidth: 3,
-  labelFontSize: 11,
+  labelFontSize: 12, // Increased for readability
   
   // Palette
   colorCanvas: THEME_TOKENS.color.canvas,

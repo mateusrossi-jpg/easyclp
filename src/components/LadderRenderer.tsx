@@ -9,7 +9,7 @@ import { LadderBlockSvg } from './LadderBlocks';
 import { ActiveTool, EditorInteractionMode, ElementType, LadderElement, WorkspaceMode, DropZone } from '../types';
 
 const COIL_TYPES: ElementType[] = ['OTE', 'OTL', 'OTU'];
-export const LADDER_INTERNAL_WIDTH = 1000;
+export const LADDER_INTERNAL_WIDTH = 1120; // Expanded to fit the new 1040 rightRailX + padding
 
 const formatBlockValue = (value: unknown) => {
   const numericValue = Number(value);
@@ -129,22 +129,22 @@ const RungRow = React.memo(({
         {el.type !== 'EMPTY' && (
           <Rect
             x={4}
-            y={13}
+            y={16}
             width={symbolWidth - 8}
-            height={GEO.rungHeight - 26}
-            rx={14}
+            height={GEO.rungHeight - 32}
+            rx={16}
             fill={isPowered ? GEO.colorElementPlateActive : GEO.colorElementPlate}
             stroke={isPowered ? 'rgba(46, 164, 97, 0.28)' : 'rgba(200, 215, 201, 0.55)'}
-            strokeWidth={1}
+            strokeWidth={1.2}
             vectorEffect="non-scaling-stroke"
           />
         )}
         {(selected || toolTarget) && (
-          <Rect x={1} y={9} width={symbolWidth - 2} height={GEO.rungHeight - 18} rx={16} fill={toolTarget ? 'rgba(38, 49, 45, 0.05)' : GEO.colorSelection} stroke={toolTarget ? GEO.colorSymbolMuted : GEO.colorPowerOn} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+          <Rect x={1} y={11} width={symbolWidth - 2} height={GEO.rungHeight - 22} rx={18} fill={toolTarget ? 'rgba(38, 49, 45, 0.05)' : GEO.colorSelection} stroke={toolTarget ? GEO.colorSymbolMuted : GEO.colorPowerOn} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
         )}
         {Comp}
         {!['GEQ', 'LEQ', 'EQU', 'NEQ', 'GRT', 'LSS', 'TON', 'CTU', 'EMPTY'].includes(el.type) && (
-          <SvgText x={GEO.columnWidth / 2} y={18} fontSize={GEO.labelFontSize} fontWeight="900" textAnchor="middle" fill={GEO.colorText} fontFamily="monospace">{el.address}</SvgText>
+          <SvgText x={GEO.columnWidth / 2} y={20} fontSize={GEO.labelFontSize} fontWeight="900" textAnchor="middle" fill={GEO.colorText} fontFamily="monospace">{el.address}</SvgText>
         )}
         <Rect x={0} y={0} width={symbolWidth} height={GEO.rungHeight} fill="transparent" onPress={() => onElementPress(el.id)}
           onLongPress={(e) => {
