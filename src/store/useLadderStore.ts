@@ -2,12 +2,15 @@ import { create } from 'zustand';
 import * as Haptics from 'expo-haptics';
 import { LayoutAnimation, Platform, UIManager } from 'react-native';
 import { v4 as uuidv4 } from 'uuid';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActiveTool, ElementType, NormalizedState, LadderElement, Rung, Variable, VariableType, DragState, DropZone } from '../types';
 import { scanCycle } from '../engine/ladderEngine';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+const STORAGE_KEY = '@easyclp_project_v1';
 
 const triggerLayoutAnimation = () => {
   if (Platform.OS !== 'web') {
@@ -32,6 +35,11 @@ interface LadderStoreState extends NormalizedState {
   undo: () => void;
   redo: () => void;
   saveHistory: () => void;
+
+  // Persistence
+  saveToStorage: () => Promise<void>;
+  loadFromStorage: () => Promise<boolean>;
+  resetWorkspace: () => void;
 
   // Actions
   setSelectedTool: (tool: ActiveTool) => void;
@@ -218,6 +226,40 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
           past: [...state.past, currentSnapshot].slice(-50), // Mantém apenas os últimos 50 passos
           future: [],
         };
+      });
+    },
+
+    saveToStorage: async () => {
+      const { rungs, elements, variables } = get();
+      const payload = JSON.stringify({ rungs, elements, variables });
+      await AsyncStorage.setItem(STORAGE_KEY, payload);
+    },
+
+    loadFromStorage: async () => {
+      try {
+        const data = await AsyncStorage.getItem(STORAGE_KEY);
+        if (data) {
+          const { rungs, elements, variables } = JSON.parse(data);
+          set({ rungs, elements, variables, past: [], future: [] });
+          return true;
+        }
+      } catch (e) {
+        console.error('Failed to load project', e);
+      }
+      return false;
+    },
+
+    resetWorkspace: () => {
+      const { rung, elements } = createEmptyRung(0);
+      set({
+        rungs: { [rung.id]: rung },
+        elements,
+        variables: {},
+        past: [],
+        future: [],
+        highlightedRungId: null,
+        editingElementId: null,
+        selectedTool: null,
       });
     },
 

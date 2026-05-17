@@ -161,6 +161,26 @@ export const scanCycle = (currentState: NormalizedState): ScanResult => {
         elementPassesPower = readNumber(left) <= readNumber(right);
         break;
       }
+      case 'EQU': {
+        const [left, , right] = element.address.split(' ');
+        elementPassesPower = readNumber(left) === readNumber(right);
+        break;
+      }
+      case 'NEQ': {
+        const [left, , right] = element.address.split(' ');
+        elementPassesPower = readNumber(left) !== readNumber(right);
+        break;
+      }
+      case 'GRT': {
+        const [left, , right] = element.address.split(' ');
+        elementPassesPower = readNumber(left) > readNumber(right);
+        break;
+      }
+      case 'LSS': {
+        const [left, , right] = element.address.split(' ');
+        elementPassesPower = readNumber(left) < readNumber(right);
+        break;
+      }
       case 'BOX':
       case 'BLOCK':
         elementPassesPower = inputPower;

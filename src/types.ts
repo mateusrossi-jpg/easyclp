@@ -8,6 +8,10 @@ export type ElementType =
   | 'CTU'
   | 'GEQ'
   | 'LEQ'
+  | 'EQU'
+  | 'NEQ'
+  | 'GRT'
+  | 'LSS'
   | 'BOX'
   | 'BLOCK'
   | 'EMPTY';

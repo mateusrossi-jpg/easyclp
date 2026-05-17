@@ -39,8 +39,12 @@ const COMPONENT_GROUPS: Array<{
   {
     title: 'Comparadores',
     items: [
+      { type: 'EQU', title: 'EQU', description: 'Igual a', symbol: '=' },
+      { type: 'NEQ', title: 'NEQ', description: 'Diferente de', symbol: '<>' },
       { type: 'GEQ', title: 'GEQ', description: 'Maior ou igual', symbol: '>=' },
       { type: 'LEQ', title: 'LEQ', description: 'Menor ou igual', symbol: '<=' },
+      { type: 'GRT', title: 'GRT', description: 'Maior que', symbol: '>' },
+      { type: 'LSS', title: 'LSS', description: 'Menor que', symbol: '<' },
       { type: 'BOX', title: 'BOX', description: 'Bloco livre', symbol: '[ ]' },
     ],
   },

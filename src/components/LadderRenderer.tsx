@@ -114,7 +114,7 @@ const RungRow = React.memo(({
     else if (el.type === 'TON' || el.type === 'CTU') {
       const v = variables[el.address]?.value as any;
       Comp = <LadderBlockSvg type={el.type} {...props} accValue={formatBlockValue(v?.acc || 0)} preValue={formatBlockValue(v?.pre || 0)} />;
-    } else if (el.type === 'GEQ' || el.type === 'LEQ') {
+    } else if (['GEQ', 'LEQ', 'EQU', 'NEQ', 'GRT', 'LSS'].includes(el.type)) {
       const parts = el.address.split(' ');
       Comp = <CompareContactSvg {...props} operator={parts[1] || el.type} label={parts[0]} value={parts[2] || '0'} />;
     }
@@ -142,7 +142,7 @@ const RungRow = React.memo(({
           <Rect x={1} y={9} width={symbolWidth - 2} height={GEO.rungHeight - 18} rx={16} fill={toolTarget ? 'rgba(38, 49, 45, 0.05)' : GEO.colorSelection} stroke={toolTarget ? GEO.colorSymbolMuted : GEO.colorPowerOn} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
         )}
         {Comp}
-        {!['GEQ', 'LEQ', 'TON', 'CTU', 'EMPTY'].includes(el.type) && (
+        {!['GEQ', 'LEQ', 'EQU', 'NEQ', 'GRT', 'LSS', 'TON', 'CTU', 'EMPTY'].includes(el.type) && (
           <SvgText x={GEO.columnWidth / 2} y={18} fontSize={GEO.labelFontSize} fontWeight="900" textAnchor="middle" fill={GEO.colorText} fontFamily="monospace">{el.address}</SvgText>
         )}
         <Rect x={0} y={0} width={symbolWidth} height={GEO.rungHeight} fill="transparent" onPress={() => onElementPress(el.id)}

@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
+  Alert,
   Modal,
   Platform,
   Pressable,
@@ -11,7 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Copy, GitBranch, PenLine, Plus, Settings2, Trash2, X } from 'lucide-react-native';
+import { Copy, FolderDown, FolderUp, GitBranch, PenLine, Plus, RefreshCcw, Settings2, Trash2, X } from 'lucide-react-native';
 
 import { ComponentMenu } from './ComponentMenu';
 import { ElementEditorModal } from './ElementEditorModal';
@@ -72,6 +73,9 @@ export const MobileLadderWorkspace = React.memo(() => {
   const updateVariable = useLadderStore(state => state.updateVariable);
   const undo = useLadderStore(state => state.undo);
   const redo = useLadderStore(state => state.redo);
+  const saveToStorage = useLadderStore(state => state.saveToStorage);
+  const loadFromStorage = useLadderStore(state => state.loadFromStorage);
+  const resetWorkspace = useLadderStore(state => state.resetWorkspace);
   const canUndo = useLadderStore(state => state.past.length > 0);
   const canRedo = useLadderStore(state => state.future.length > 0);
 
@@ -82,6 +86,35 @@ export const MobileLadderWorkspace = React.memo(() => {
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
   const [selectedRungId, setSelectedRungId] = useState<string | null>(null);
   const [branchStartColumn, setBranchStartColumn] = useState<number | null>(null);
+
+  React.useEffect(() => {
+    loadFromStorage();
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    await saveToStorage();
+    if (Platform.OS !== 'web') {
+      Alert.alert('Sucesso', 'Projeto salvo no dispositivo.');
+    } else {
+      alert('Projeto salvo com sucesso!');
+    }
+  }, [saveToStorage]);
+
+  const handleClear = useCallback(() => {
+    const performClear = () => {
+      resetWorkspace();
+      setVariableDrawerOpen(false);
+    };
+
+    if (Platform.OS !== 'web') {
+      Alert.alert('Limpar Editor', 'Isso irá apagar toda a lógica atual. Continuar?', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Limpar', style: 'destructive', onPress: performClear }
+      ]);
+    } else if (confirm('Limpar toda a lógica atual?')) {
+      performClear();
+    }
+  }, [resetWorkspace]);
 
   const variableList = useMemo(() => {
     return Object.values(variables).sort((a, b) => a.id.localeCompare(b.id));
@@ -557,6 +590,20 @@ export const MobileLadderWorkspace = React.memo(() => {
               </View>
             )}
           </ScrollView>
+
+          <View style={styles.drawerFooter}>
+            <Text style={styles.footerLabel}>PROJETO LOCAL</Text>
+            <View style={styles.footerRow}>
+              <TouchableOpacity style={styles.footerAction} activeOpacity={0.72} onPress={handleSave}>
+                <FolderDown size={18} color="#111827" strokeWidth={2.2} />
+                <Text style={styles.footerActionText}>Salvar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.footerAction, styles.footerActionDanger]} activeOpacity={0.72} onPress={handleClear}>
+                <RefreshCcw size={18} color="#B42318" strokeWidth={2.2} />
+                <Text style={[styles.footerActionText, styles.contextTextDanger]}>Limpar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </Modal>
     </SafeAreaView>
@@ -942,5 +989,43 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     lineHeight: 17,
     textAlign: 'center',
+  },
+  drawerFooter: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: THEME_TOKENS.color.borderSubtle,
+    marginTop: 'auto',
+  },
+  footerLabel: {
+    color: THEME_TOKENS.color.textMuted,
+    fontSize: 10,
+    fontWeight: '900',
+    marginBottom: 10,
+    letterSpacing: 0.5,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  footerAction: {
+    flex: 1,
+    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 12,
+    backgroundColor: THEME_TOKENS.color.surfaceMuted,
+    borderWidth: 1,
+    borderColor: THEME_TOKENS.color.borderSubtle,
+  },
+  footerActionDanger: {
+    backgroundColor: '#FFF1F0',
+    borderColor: 'rgba(180, 35, 24, 0.1)',
+  },
+  footerActionText: {
+    color: '#111827',
+    fontSize: 13,
+    fontWeight: '900',
   },
 });
