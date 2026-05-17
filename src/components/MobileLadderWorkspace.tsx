@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import * as Haptics from 'expo-haptics';
 import {
   Alert,
   Modal,
@@ -20,6 +21,7 @@ import { LadderCanvas, LadderCanvasHandle } from './LadderCanvas';
 import { DragOverlay } from './DragOverlay';
 import { SimulationControls } from './SimulationControls';
 import { TopActionBar } from './TopActionBar';
+import { ProjectManager } from './ProjectManager';
 import { useLadderStore } from '../store/useLadderStore';
 import { ActiveTool, EditorInteractionMode, ElementType, LadderElement, WorkspaceMode } from '../types';
 import { THEME_TOKENS } from '../consts/themeTokens';
@@ -81,6 +83,7 @@ export const MobileLadderWorkspace = React.memo(() => {
 
   const [componentMenuOpen, setComponentMenuOpen] = useState(false);
   const [variableDrawerOpen, setVariableDrawerOpen] = useState(false);
+  const [projectManagerOpen, setProjectManagerOpen] = useState(false);
   const [mode, setMode] = useState<WorkspaceMode>('edit');
   const [interactionMode, setInteractionMode] = useState<EditorInteractionMode>('idle');
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
@@ -94,27 +97,14 @@ export const MobileLadderWorkspace = React.memo(() => {
   const handleSave = useCallback(async () => {
     await saveToStorage();
     if (Platform.OS !== 'web') {
-      Alert.alert('Sucesso', 'Projeto salvo no dispositivo.');
-    } else {
-      alert('Projeto salvo com sucesso!');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
   }, [saveToStorage]);
 
-  const handleClear = useCallback(() => {
-    const performClear = () => {
-      resetWorkspace();
-      setVariableDrawerOpen(false);
-    };
-
-    if (Platform.OS !== 'web') {
-      Alert.alert('Limpar Editor', 'Isso irá apagar toda a lógica atual. Continuar?', [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Limpar', style: 'destructive', onPress: performClear }
-      ]);
-    } else if (confirm('Limpar toda a lógica atual?')) {
-      performClear();
-    }
-  }, [resetWorkspace]);
+  const handleOpenProjectManager = useCallback(() => {
+    setVariableDrawerOpen(false);
+    setProjectManagerOpen(true);
+  }, []);
 
   const variableList = useMemo(() => {
     return Object.values(variables).sort((a, b) => a.id.localeCompare(b.id));
@@ -141,6 +131,7 @@ export const MobileLadderWorkspace = React.memo(() => {
 
   const activeTool = selectedTool;
   const rungCount = useMemo(() => Object.keys(rungs).length, [rungs]);
+  const currentProjectName = useLadderStore(state => state.metadata?.name);
 
   const normalizeElementTool = useCallback((tool: ActiveTool): ElementType | null => {
     if (!tool || tool === 'RUNG' || tool === 'PARALLEL_BRANCH') return null;
@@ -403,9 +394,9 @@ export const MobileLadderWorkspace = React.memo(() => {
           onCenterView={() => canvasRef.current?.fitToScreen()}
           onResetZoom={() => canvasRef.current?.resetZoom()}
           isSimulating={isSimulating}
-          onToggleSimulation={handleToggleSimulation}
+          onToggleSimulation={() => setSimulating(!isSimulating)}
           mode={mode}
-          onModeChange={handleModeChange}
+          onModeChange={setMode}
           onUndo={undo}
           onRedo={redo}
           canUndo={canUndo}
@@ -413,7 +404,9 @@ export const MobileLadderWorkspace = React.memo(() => {
           rungCount={rungCount}
           activeSignalCount={activeSignalCount}
           totalSignalCount={variableList.length}
+          projectName={currentProjectName}
         />
+
 
         <View style={styles.canvasShell}>
           <LadderCanvas
@@ -592,20 +585,21 @@ export const MobileLadderWorkspace = React.memo(() => {
           </ScrollView>
 
           <View style={styles.drawerFooter}>
-            <Text style={styles.footerLabel}>PROJETO LOCAL</Text>
+            <Text style={styles.footerLabel}>SESSÃO ATUAL</Text>
             <View style={styles.footerRow}>
-              <TouchableOpacity style={styles.footerAction} activeOpacity={0.72} onPress={handleSave}>
-                <FolderDown size={18} color="#111827" strokeWidth={2.2} />
-                <Text style={styles.footerActionText}>Salvar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.footerAction, styles.footerActionDanger]} activeOpacity={0.72} onPress={handleClear}>
-                <RefreshCcw size={18} color="#B42318" strokeWidth={2.2} />
-                <Text style={[styles.footerActionText, styles.contextTextDanger]}>Limpar</Text>
+              <TouchableOpacity style={styles.footerAction} activeOpacity={0.72} onPress={handleOpenProjectManager}>
+                <FolderUp size={18} color="#111827" strokeWidth={2.2} />
+                <Text style={styles.footerActionText}>Gerenciar Projetos</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
+
+      <ProjectManager 
+        visible={projectManagerOpen} 
+        onClose={() => setProjectManagerOpen(false)} 
+      />
     </SafeAreaView>
   );
 });

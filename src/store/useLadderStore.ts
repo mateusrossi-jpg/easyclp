@@ -3,14 +3,15 @@ import * as Haptics from 'expo-haptics';
 import { LayoutAnimation, Platform, UIManager } from 'react-native';
 import { v4 as uuidv4 } from 'uuid';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ActiveTool, ElementType, NormalizedState, LadderElement, Rung, Variable, VariableType, DragState, DropZone } from '../types';
+import { ActiveTool, ElementType, NormalizedState, LadderElement, Rung, Variable, VariableType, DragState, DropZone, ProjectMetadata } from '../types';
 import { scanCycle } from '../engine/ladderEngine';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const STORAGE_KEY = '@easyclp_project_v1';
+const STORAGE_KEY_PREFIX = '@easyclp_project_';
+const PROJECTS_INDEX_KEY = '@easyclp_projects_index';
 
 const triggerLayoutAnimation = () => {
   if (Platform.OS !== 'web') {
@@ -30,6 +31,9 @@ interface LadderStoreState extends NormalizedState {
   dropZones: DropZone[];
   highlightedRungId: string | null;
   
+  projects: ProjectMetadata[];
+  currentProjectId: string | null;
+
   past: NormalizedState[];
   future: NormalizedState[];
   undo: () => void;
@@ -37,8 +41,10 @@ interface LadderStoreState extends NormalizedState {
   saveHistory: () => void;
 
   // Persistence
-  saveToStorage: () => Promise<void>;
-  loadFromStorage: () => Promise<boolean>;
+  listProjects: () => Promise<ProjectMetadata[]>;
+  saveToStorage: (projectName?: string) => Promise<void>;
+  loadFromStorage: (projectId?: string) => Promise<boolean>;
+  deleteProject: (projectId: string) => Promise<void>;
   resetWorkspace: () => void;
 
   // Actions
@@ -208,6 +214,8 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
     },
     dropZones: [],
     highlightedRungId: null,
+    projects: [],
+    currentProjectId: null,
     past: [],
     future: [],
 
@@ -221,6 +229,7 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
           rungs: state.rungs,
           elements: state.elements,
           variables: state.variables,
+          metadata: state.metadata,
         };
         return {
           past: [...state.past, currentSnapshot].slice(-50), // Mantém apenas os últimos 50 passos
@@ -229,18 +238,72 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
       });
     },
 
-    saveToStorage: async () => {
-      const { rungs, elements, variables } = get();
-      const payload = JSON.stringify({ rungs, elements, variables });
-      await AsyncStorage.setItem(STORAGE_KEY, payload);
+    listProjects: async () => {
+      try {
+        const index = await AsyncStorage.getItem(PROJECTS_INDEX_KEY);
+        const projects = index ? JSON.parse(index) : [];
+        set({ projects });
+        return projects;
+      } catch (e) {
+        console.error('Failed to list projects', e);
+        return [];
+      }
     },
 
-    loadFromStorage: async () => {
+    saveToStorage: async (projectName) => {
+      const state = get();
+      const projectId = state.currentProjectId || uuidv4();
+      const name = projectName || state.metadata?.name || 'Projeto Sem Nome';
+      
+      const metadata: ProjectMetadata = {
+        id: projectId,
+        name,
+        lastModified: Date.now(),
+      };
+
+      const payload = JSON.stringify({
+        rungs: state.rungs,
+        elements: state.elements,
+        variables: state.variables,
+        metadata,
+      });
+
+      await AsyncStorage.setItem(`${STORAGE_KEY_PREFIX}${projectId}`, payload);
+      
+      // Update index
+      const projects = await get().listProjects();
+      const existingIdx = projects.findIndex(p => p.id === projectId);
+      if (existingIdx !== -1) {
+        projects[existingIdx] = metadata;
+      } else {
+        projects.push(metadata);
+      }
+      
+      await AsyncStorage.setItem(PROJECTS_INDEX_KEY, JSON.stringify(projects));
+      set({ currentProjectId: projectId, metadata, projects: [...projects] });
+    },
+
+    loadFromStorage: async (projectId) => {
       try {
-        const data = await AsyncStorage.getItem(STORAGE_KEY);
+        let id = projectId;
+        if (!id) {
+          const projects = await get().listProjects();
+          if (projects.length === 0) return false;
+          id = projects.sort((a, b) => b.lastModified - a.lastModified)[0].id;
+        }
+
+        const data = await AsyncStorage.getItem(`${STORAGE_KEY_PREFIX}${id}`);
         if (data) {
-          const { rungs, elements, variables } = JSON.parse(data);
-          set({ rungs, elements, variables, past: [], future: [] });
+          const { rungs, elements, variables, metadata } = JSON.parse(data);
+          set({ 
+            rungs, 
+            elements, 
+            variables, 
+            metadata, 
+            currentProjectId: id, 
+            past: [], 
+            future: [] 
+          });
           return true;
         }
       } catch (e) {
@@ -249,12 +312,30 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
       return false;
     },
 
+    deleteProject: async (projectId) => {
+      try {
+        await AsyncStorage.removeItem(`${STORAGE_KEY_PREFIX}${projectId}`);
+        const projects = await get().listProjects();
+        const updated = projects.filter(p => p.id !== projectId);
+        await AsyncStorage.setItem(PROJECTS_INDEX_KEY, JSON.stringify(updated));
+        set({ projects: updated });
+        
+        if (get().currentProjectId === projectId) {
+          get().resetWorkspace();
+        }
+      } catch (e) {
+        console.error('Failed to delete project', e);
+      }
+    },
+
     resetWorkspace: () => {
       const { rung, elements } = createEmptyRung(0);
       set({
         rungs: { [rung.id]: rung },
         elements,
         variables: {},
+        metadata: undefined,
+        currentProjectId: null,
         past: [],
         future: [],
         highlightedRungId: null,

@@ -73,10 +73,21 @@ export interface Rung {
   order: number;
 }
 
+export interface ProjectMetadata {
+  id: string;
+  name: string;
+  lastModified: number;
+}
+
+export interface Project extends NormalizedState {
+  metadata: ProjectMetadata;
+}
+
 export interface NormalizedState {
   rungs: Record<string, Rung>;
   elements: Record<string, LadderElement>;
   variables: Record<string, Variable>;
+  metadata?: ProjectMetadata;
 }
 
 export interface DragState {

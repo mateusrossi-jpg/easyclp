@@ -28,6 +28,7 @@ interface TopActionBarProps {
   rungCount: number;
   activeSignalCount: number;
   totalSignalCount: number;
+  projectName?: string;
 }
 
 const iconColor = '#1F2937';
@@ -47,12 +48,13 @@ export const TopActionBar = React.memo(({
   rungCount,
   activeSignalCount,
   totalSignalCount,
+  projectName,
 }: TopActionBarProps) => {
   const { width } = useWindowDimensions();
   const compact = width < 390;
   const subtitle = mode === 'simulate'
     ? isSimulating ? 'Simulação rodando' : 'Simulação parada'
-    : 'Editor Ladder';
+    : projectName || 'Editor Ladder';
 
   return (
     <View style={styles.container}>
