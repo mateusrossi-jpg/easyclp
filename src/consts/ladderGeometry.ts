@@ -7,39 +7,39 @@ import { THEME_TOKENS } from './themeTokens';
  */
 export const LADDER_GEOMETRY = {
   // Global Shell
-  leftRailX: 48,
-  rightRailX: 1160, // Further expanded for better spacing
-  railWidth: 4,     // Slightly thicker for premium feel
-  topPadding: 44,
+  leftRailX: 52,
+  rightRailX: 1200, // Expanded for breathing room and 12 larger columns
+  railWidth: 4.5,   // Thicker for premium industrial feel
+  topPadding: 48,
   
   // Grid System
   columnCount: 12,
-  columnWidth: 90,  // (1160 - 48 - 48) / 12 ~= 88.6 -> 90 for rounded math
+  columnWidth: 94,  // (1200 - 52 - 52) / 12 ~= 91.3 -> 94 for generous spacing
   
   // Rung Density
-  rungHeight: 140,  // Taller rungs for better touch targets and vertical breathing room
-  branchGap: 124,
-  centerY: 70,      // Adjusted for new rungHeight
+  rungHeight: 156,  // Much taller rungs for touch and multi-line comments
+  branchGap: 132,
+  centerY: 78,      // Perfectly centered in 156 height
   
-  // Symbol Proportions
-  contactWidth: 40,
-  contactHeight: 36,
-  coilWidth: 52,
-  coilHeight: 38,
+  // Symbol Proportions (Upscaled)
+  contactWidth: 44,
+  contactHeight: 40,
+  coilWidth: 56,
+  coilHeight: 42,
   
-  // Function Blocks (Large and Legible)
-  blockWidth: 170,  // Occupies almost 2 full columns (90*2=180)
-  blockHeight: 104,
-  blockHeaderHeight: 28,
+  // Function Blocks (Industrial Premium)
+  blockWidth: 184,  // Almost 2 columns (94*2=188)
+  blockHeight: 112,
+  blockHeaderHeight: 32,
   
   // Comparators (Technical)
-  compareWidth: 72,
-  compareHeight: 40,
+  compareWidth: 78,
+  compareHeight: 44,
   
   // Visual Weight
-  lineWidth: 1.8,
-  activeLineWidth: 3.5,
-  labelFontSize: 13, // Larger labels
+  lineWidth: 2.2,
+  activeLineWidth: 4.5, // Filamental glow feel
+  labelFontSize: 14,    // Highly legible tags
   
   // Palette
   colorCanvas: THEME_TOKENS.color.canvas,

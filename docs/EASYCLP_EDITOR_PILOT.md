@@ -1,52 +1,41 @@
 # EasyCLP — Editor Ladder Pilot
 
 ## Objetivo
-Estabilizar a tela principal do editor Ladder mobile-first e polir a UX.
+Estabilizar a tela principal do editor Ladder mobile-first e polir a UX para um nível Premium Industrial.
 
 ## Decisões de UX
 - Mobile-first com grid rígido de 12 colunas.
-- Inserção por seleção + menu, não apenas drag/drop.
+- Inserção por seleção + menu é o fluxo principal.
 - Rungs com altura dinâmica e respiro superior para touch.
 - Branch paralelo empurra rungs seguintes e reconecta inteligentemente.
-- Botão "+ Componentes" e status flutuam de forma que o conteúdo abaixo não fique inacessível (scroll bottom padding aplicado).
+- Botão "+ Componentes" e status flutuam de forma que o conteúdo abaixo não fique inacessível.
+- Escala mobile protegida (mínimo 0.45) para garantir legibilidade técnica.
 
 ## Estrutura visual
-- Header premium exibindo o nome do Projeto ativo.
+- Header premium compacto exibindo o nome do Projeto e métricas em tempo real.
 - Canvas Ladder expandido (legibilidade priorizada sobre visão geral).
-- Barramentos (rails) com efeito de profundidade e espessura industrial.
+- Barramentos (rails) com efeito de profundidade, espessura industrial e nós de conexão técnicos.
 - Rungs com documentação (comments) em itálico e maior peso.
 - Componentes e blocos maiores para interações touch confortáveis.
-- Bottom sheet de componentes incluindo categoria "⭐ Favoritos".
-- Status de simulação com feedback de estado ativo.
+- Bottom sheet de componentes tátil com estados "Pressed" satisfatórios.
+- Status de simulação com feedback de estado ativo e filamento de energia (glow).
 
 ## Fluxo de uso
 1. Criar rung.
 2. Adicionar documentação (via menu de contexto da Rung).
 3. Selecionar ponto de inserção.
-4. Abrir + Componentes.
+4. Abrir + Componentes (menu tátil).
 5. Inserir componente.
-6. Adicionar paralelo.
-7. Iniciar/parar simulação básica.
+6. Adicionar paralelo (guias técnicas auxiliam a escolha).
+7. Iniciar/parar simulação (banner de instrução integrado ao header).
 8. Salvar/Carregar via Gerenciador de Projetos.
 9. Exportar projeto (JSON).
 
-## Polimento mobile do canvas
-- **Escala e Grid**: O `rightRailX` foi expandido para 1160, com `columnWidth` de 90. A altura padrão das rungs subiu para 140. Essa escala "pesada" garante legibilidade perfeita em qualquer celular moderno.
-- **Legibilidade dos Blocos**:
-  - **TON e CTU**: Blocos agora medem 170x104. Textos de parâmetros (IN, PT, CU, ACC...) agora usam fonte tamanho 12 e peso 900.
-  - **Cabeçalhos**: Títulos TON/CTU ampliados para tamanho 14, com contraste máximo.
-- **Labels e Textos**: `address` dos componentes agora usa tamanho 13, facilitando a leitura de tags complexas.
-- **Truncamento de Tags**: Endereços muito longos são truncados elegantemente para evitar poluição visual.
-- **Múltiplos Projetos**: Interface nativa estabilizada.
-
-## Legibilidade mobile dos blocos
-- **Prioridade de Leitura**: No mobile, o sistema agora impede que a escala caia abaixo de 0.45. Isso significa que o editor favorece a leitura dos componentes, ativando scroll horizontal interno se a rung for muito larga, em vez de diminuir os blocos até ficarem ilegíveis.
-- **Ajuste de Segurança**: Blocos largos (como TON) próximos ao barramento direito são automaticamente reposicionados (nudge) para a esquerda para evitar que sejam cortados ou encostem no rail.
-
-## Modo Simular limpo
-- **Interface Focada**: Removidos botões redundantes e cards flutuantes.
-- **Status Consolidado**: O status e instruções foram movidos para o Header.
-- **Ocultação de Edição**: Interface de construção some automaticamente ao simular.
+## Refinamento Premium Industrial
+- **Blocos Funcionais (TON/CTU)**: Redesenhados com profundidade "Sharp", cabeçalhos detalhados e tipografia monospace rigorosa. Indicadores de "Energized" (LED verde interno) adicionados.
+- **Símbolos (Contatos/Bobinas)**: Linhas perfeitamente nítidas e curvaturas técnicas. Feedback de energia usa efeito de filamento brilhante.
+- **TopActionBar**: Otimizada para ser compacta, permitindo maior área útil de editor enquanto mantém métricas de Rungs e Sinais visíveis.
+- **Nós de Conexão**: Junções entre rungs e rails agora possuem detalhes visuais que sugerem conexões físicas reais.
 
 ## Pendências (Próximos Passos Futuros)
 - Motor completo de simulação (avançar blocos PID, Math).

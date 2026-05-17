@@ -9,9 +9,9 @@ import { LadderBlockSvg } from './LadderBlocks';
 import { ActiveTool, EditorInteractionMode, ElementType, LadderElement, WorkspaceMode, DropZone } from '../types';
 
 const COIL_TYPES: ElementType[] = ['OTE', 'OTL', 'OTU'];
-export const LADDER_INTERNAL_WIDTH = 1280;
+export const LADDER_INTERNAL_WIDTH = 1320;
 
-const truncateAddress = (address: string, maxLength: number = 10) => {
+const truncateAddress = (address: string, maxLength: number = 14) => {
   if (!address) return '';
   return address.length > maxLength ? address.substring(0, maxLength - 2) + '..' : address;
 };
@@ -143,20 +143,20 @@ const RungRow = React.memo(({
             y={24}
             width={symbolWidth - 12}
             height={GEO.rungHeight - 48}
-            rx={18}
+            rx={20}
             fill={isPowered ? GEO.colorElementPlateActive : GEO.colorElementPlate}
-            stroke={isPowered ? 'rgba(46, 164, 97, 0.28)' : 'rgba(200, 215, 201, 0.55)'}
-            strokeWidth={1.5}
+            stroke={isPowered ? 'rgba(46, 164, 97, 0.32)' : 'rgba(156, 163, 175, 0.4)'}
+            strokeWidth={1.8}
             vectorEffect="non-scaling-stroke"
           />
         )}
         {(selected || toolTarget) && (
-          <Rect x={1} y={14} width={symbolWidth - 2} height={GEO.rungHeight - 28} rx={22} fill={toolTarget ? 'rgba(38, 49, 45, 0.05)' : GEO.colorSelection} stroke={toolTarget ? GEO.colorSymbolMuted : GEO.colorPowerOn} strokeWidth={2} vectorEffect="non-scaling-stroke" />
+          <Rect x={1} y={12} width={symbolWidth - 2} height={GEO.rungHeight - 24} rx={22} fill={toolTarget ? 'rgba(31, 41, 51, 0.05)' : GEO.colorSelection} stroke={toolTarget ? GEO.colorSymbolMuted : GEO.colorPowerOn} strokeWidth={2.2} vectorEffect="non-scaling-stroke" />
         )}
         {Comp}
         {!['GEQ', 'LEQ', 'EQU', 'NEQ', 'GRT', 'LSS', 'TON', 'CTU', 'EMPTY'].includes(el.type) && (
-          <SvgText x={GEO.columnWidth / 2} y={24} fontSize={GEO.labelFontSize} fontWeight="900" textAnchor="middle" fill={GEO.colorText} fontFamily="monospace">
-            {truncateAddress(el.address, 12)}
+          <SvgText x={GEO.columnWidth / 2} y={26} fontSize={GEO.labelFontSize} fontWeight="900" textAnchor="middle" fill={GEO.colorText} fontFamily="monospace">
+            {truncateAddress(el.address, 14)}
           </SvgText>
         )}
         <Rect x={0} y={0} width={symbolWidth} height={GEO.rungHeight} fill="transparent" onPress={() => onElementPress(el.id)}
@@ -189,17 +189,25 @@ const RungRow = React.memo(({
       
       {/* Rung Comment */}
       {rung.comment && (
-        <SvgText x={GEO.leftRailX} y={localY + 18} fontSize={12} fontStyle="italic" fill={THEME_TOKENS.color.textMuted} fontWeight="600">{rung.comment}</SvgText>
+        <SvgText x={GEO.leftRailX} y={localY + 22} fontSize={13} fontStyle="italic" fill={THEME_TOKENS.color.textMuted} fontWeight="800">{rung.comment}</SvgText>
       )}
 
       {/* Rung Index Badge */}
-      <Rect x={GEO.leftRailX - 38} y={localY + GEO.centerY - 14} width={28} height={28} rx={10} fill="#FFFFFF" stroke="#DDE7DD" strokeWidth={1} vectorEffect="non-scaling-stroke" />
-      <SvgText x={GEO.leftRailX - 24} y={localY + GEO.centerY + 6} fontSize={12} fontWeight="900" textAnchor="middle" fill="#91A098">{rIdx}</SvgText>
+      <Rect x={GEO.leftRailX - 42} y={localY + GEO.centerY - 15} width={30} height={30} rx={10} fill="#FFFFFF" stroke="#DDE7DD" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+      <SvgText x={GEO.leftRailX - 27} y={localY + GEO.centerY + 7} fontSize={13} fontWeight="900" textAnchor="middle" fill="#91A098">{rIdx}</SvgText>
+
       
+      {/* Rail Connection Nodes (Industrial Detail) */}
+      <Circle cx={GEO.leftRailX} cy={localY + GEO.centerY} r={3.5} fill={rung.isPowered ? GEO.colorPowerOn : GEO.colorPowerOff} />
+      <Circle cx={GEO.rightRailX} cy={localY + GEO.centerY} r={3.5} fill={GEO.colorPowerOff} />
+
       {/* Main Rung Line */}
       <Line x1={GEO.leftRailX} y1={localY + GEO.centerY} x2={GEO.rightRailX} y2={localY + GEO.centerY} stroke={GEO.colorPowerOff} strokeWidth={GEO.lineWidth} strokeOpacity={0.6} vectorEffect="non-scaling-stroke" />
       {rung.isPowered && (
-        <Line x1={GEO.leftRailX} y1={localY + GEO.centerY} x2={GEO.rightRailX} y2={localY + GEO.centerY} stroke={GEO.colorPowerOn} strokeWidth={GEO.activeLineWidth} vectorEffect="non-scaling-stroke" />
+        <G>
+          <Line x1={GEO.leftRailX} y1={localY + GEO.centerY} x2={GEO.rightRailX} y2={localY + GEO.centerY} stroke={GEO.colorPowerOn} strokeWidth={GEO.activeLineWidth + 2} strokeOpacity={0.15} vectorEffect="non-scaling-stroke" />
+          <Line x1={GEO.leftRailX} y1={localY + GEO.centerY} x2={GEO.rightRailX} y2={localY + GEO.centerY} stroke={GEO.colorPowerOn} strokeWidth={GEO.activeLineWidth} vectorEffect="non-scaling-stroke" />
+        </G>
       )}
 
       {branchRows.map(branchIndex => {
