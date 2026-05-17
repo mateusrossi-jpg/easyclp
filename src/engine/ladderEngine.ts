@@ -80,13 +80,19 @@ export const scanCycle = (currentState: NormalizedState): ScanResult => {
       case 'OTL':
         elementPassesPower = inputPower;
         if (variable && variable.type === 'BOOL' && inputPower) {
+          const wasPowered = variable.value === true;
           nextVariables[element.address] = { ...variable, value: true };
+          if (!wasPowered) newlyEnergizedCoils.push(element.id);
         }
         break;
       case 'OTU':
         elementPassesPower = inputPower;
-        if (variable && variable.type === 'BOOL' && inputPower) {
-          nextVariables[element.address] = { ...variable, value: false };
+        if (inputPower) {
+          if (element.address.endsWith('.RES')) {
+            resetCounter(element.address.replace(/\.RES$/i, ''));
+          } else if (variable && variable.type === 'BOOL') {
+            nextVariables[element.address] = { ...variable, value: false };
+          }
         }
         break;
       case 'OTE': {
