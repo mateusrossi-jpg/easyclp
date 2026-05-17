@@ -2,13 +2,13 @@ import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useLadderStore } from '../store/useLadderStore';
 import { ActiveTool } from '../types';
+import { THEME_TOKENS } from '../consts/themeTokens';
 
-// Você pode substituir este componente interno pelos seus SVGs reais depois
 const ToolPreview = ({ tool }: { tool: ActiveTool }) => {
   if (tool === 'RESIZE_BRANCH_START' || tool === 'RESIZE_BRANCH_END') {
     return (
-      <View style={[styles.toolPreview, { borderRadius: 30, width: 24, height: 24, borderWidth: 1.5 }]}>
-        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#0D6EFD' }} />
+      <View style={styles.resizePreview}>
+        <View style={styles.resizeDot} />
       </View>
     );
   }
@@ -26,8 +26,6 @@ export const DragOverlay = () => {
     return null;
   }
 
-  // Dimensões estimadas da peça.
-  // Subtraímos metade para que a peça fique exatamente centralizada sob a ponta do dedo.
   const ELEMENT_WIDTH = 60;
   const ELEMENT_HEIGHT = 60;
 
@@ -36,7 +34,7 @@ export const DragOverlay = () => {
 
   return (
     <View
-      pointerEvents="none" // Essencial: impede que o overlay roube o evento do dedo
+      pointerEvents="none"
       style={[
         styles.overlayContainer,
         { transform: [{ translateX: x }, { translateY: y }] },
@@ -54,21 +52,42 @@ const styles = StyleSheet.create({
     left: 0,
     zIndex: 10000,
     elevation: 10000,
-    opacity: 0.7, // Deixa a peça semi-transparente
+    opacity: 0.82,
   },
   toolPreview: {
     width: 60,
     height: 60,
-    backgroundColor: '#E7F1FF',
+    backgroundColor: 'rgba(248, 250, 246, 0.94)',
     borderWidth: 2,
-    borderColor: '#0D6EFD',
+    borderColor: THEME_TOKENS.color.energy,
     borderStyle: 'dashed',
-    borderRadius: 8,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#24352C',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    elevation: 8,
+  },
+  resizePreview: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: THEME_TOKENS.color.energy,
+    backgroundColor: 'rgba(248, 250, 246, 0.96)',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  resizeDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: THEME_TOKENS.color.energy,
+  },
   toolText: {
-    color: '#0D6EFD',
+    color: THEME_TOKENS.color.railLeft,
     fontSize: 12,
     fontWeight: '900',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',

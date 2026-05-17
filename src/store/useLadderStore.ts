@@ -94,12 +94,22 @@ const resequenceRungs = (rungs: Record<string, Rung>) => {
   ) as Record<string, Rung>;
 };
 
+const getNextVariableId = (variables: Record<string, Variable>, prefix: string) => {
+  let index = 1;
+  while (variables[`${prefix}${index}`]) {
+    index += 1;
+  }
+  return `${prefix}${index}`;
+};
+
 export const useLadderStore = create<LadderStoreState>((set, get) => {
   const initialVariables: Record<string, Variable> = {
     'X0': { id: 'X0', type: 'BOOL', value: false },
     'SystemOn': { id: 'SystemOn', type: 'BOOL', value: false },
     '2Clicks': { id: '2Clicks', type: 'BOOL', value: false },
     'Counter': { id: 'Counter', type: 'COUNTER', value: { acc: 0, pre: 2, dn: false } },
+    'Counter.CV': { id: 'Counter.CV', type: 'NUMBER', value: 0 },
+    'Counter.DN': { id: 'Counter.DN', type: 'BOOL', value: false },
     '2ClkTmr': { id: '2ClkTmr', type: 'TIMER', value: { acc: 0, pre: 5000, dn: false, tt: false } },
     'Cycle': { id: 'Cycle', type: 'TIMER', value: { acc: 0, pre: 16000, dn: false, tt: false } },
     'Cycle.Q': { id: 'Cycle.Q', type: 'BOOL', value: false },
@@ -253,15 +263,25 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
     setElement: (rungId, elementId, type, address) => {
       get().saveHistory();
       set((state) => {
+        const nextVariables = { ...state.variables };
+        const resolvedAddress = address || (
+          type === 'TON' ? getNextVariableId(nextVariables, 'T') :
+          type === 'CTU' ? getNextVariableId(nextVariables, 'C') :
+          type === 'GEQ' ? `${getNextVariableId(nextVariables, 'Valor')} >= 0` :
+          type === 'LEQ' ? `${getNextVariableId(nextVariables, 'Valor')} <= 0` :
+          type === 'OTE' || type === 'OTL' || type === 'OTU' ? getNextVariableId(nextVariables, 'Y') :
+          type === 'XIC' || type === 'XIO' ? getNextVariableId(nextVariables, 'X') :
+          ''
+        );
         const nextElements = { ...state.elements };
         nextElements[elementId] = {
           ...nextElements[elementId],
           type,
-          address,
+          address: resolvedAddress,
         };
 
-        const nextVariables = { ...state.variables };
-        if (address && !nextVariables[address]) {
+        const variableAddress = (type === 'GEQ' || type === 'LEQ') ? resolvedAddress.split(' ')[0] : resolvedAddress;
+        if (variableAddress && !nextVariables[variableAddress]) {
           let varType: VariableType = 'BOOL';
           let initialValue: any = false;
 
@@ -271,12 +291,12 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
           } else if (type === 'CTU') {
             varType = 'COUNTER';
             initialValue = { acc: 0, pre: 10, dn: false };
-          } else if (type === 'BLOCK') {
+          } else if (type === 'BLOCK' || type === 'GEQ' || type === 'LEQ') {
             varType = 'NUMBER';
             initialValue = 0;
           }
 
-          nextVariables[address] = { id: address, value: initialValue, type: varType };
+          nextVariables[variableAddress] = { id: variableAddress, value: initialValue, type: varType };
         }
 
         return { elements: nextElements, variables: nextVariables };
@@ -524,16 +544,16 @@ export const useLadderStore = create<LadderStoreState>((set, get) => {
                 if (el.type === 'OTE') {
                    nextVariables[el.address] = { ...nextVariables[el.address], value: false };
                 } else if (el.type === 'TON') {
-                   const oldVal = nextVariables[el.address].value;
+                   const oldVal = nextVariables[el.address].value as unknown as Record<string, unknown>;
                    nextVariables[el.address] = { 
                      ...nextVariables[el.address], 
-                     value: { ...oldVal, acc: 0, dn: false, tt: false } 
+                     value: { ...oldVal, pre: Number(oldVal.pre ?? 1000), acc: 0, dn: false, tt: false } 
                    };
                 } else if (el.type === 'CTU') {
-                   const oldVal = nextVariables[el.address].value;
+                   const oldVal = nextVariables[el.address].value as unknown as Record<string, unknown>;
                    nextVariables[el.address] = { 
                      ...nextVariables[el.address], 
-                     value: { ...oldVal, acc: 0, dn: false } 
+                     value: { ...oldVal, pre: Number(oldVal.pre ?? 10), acc: 0, dn: false } 
                    };
                 }
              }

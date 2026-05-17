@@ -1,12 +1,10 @@
 import React from 'react';
-import { LayoutChangeEvent, PanResponder, Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { LADDER_INTERNAL_WIDTH, LadderRenderer } from './LadderRenderer';
 import { Dimensions, LayoutChangeEvent, PanResponder, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { getElementX, LADDER_INTERNAL_WIDTH, LadderRenderer } from './LadderRenderer';
 import { getBranchY, getRungHeight, LADDER_GEOMETRY as GEO } from '../consts/ladderGeometry';
 import { useLadderStore } from '../store/useLadderStore';
-import { ActiveTool, EditorInteractionMode, WorkspaceMode } from '../types';
-import { ActiveTool, EditorInteractionMode, LadderElement, WorkspaceMode } from '../types';
+import { ActiveTool, EditorInteractionMode, LadderElement, Rung, WorkspaceMode } from '../types';
+import { THEME_TOKENS } from '../consts/themeTokens';
 
 const BOTTOM_CONTROL_SPACE = 192;
 const MIN_CONTAINER_WIDTH = 1;
@@ -42,7 +40,7 @@ const calculateHitZone = (moveY: number, canvasX: number, canvasY: number, state
   const colWidth = (GEO as any).columnWidth || 60;
   const rHeight = (GEO as any).rungHeight || (GEO as any).rungBaseHeight || 92;
 
-  const rungs = Object.values(state.rungs).sort((a: any, b: any) => a.order - b.order);
+  const rungs = (Object.values(state.rungs) as Rung[]).sort((a, b) => a.order - b.order);
   let currentY = GEO.topPadding;
   
   for (const rung of rungs) {
@@ -120,16 +118,6 @@ export const LadderCanvas = React.memo(React.forwardRef<LadderCanvasHandle, Ladd
 
       if (state.selectedTool && !state.dragState.isDragging) {
         state.startDragging(state.selectedTool, pageX, pageY);
-        
-        const dropZones = state.dropZones;
-        let hitId = null;
-        for (let i = dropZones.length - 1; i >= 0; i--) {
-          const z = dropZones[i];
-          if (locationX >= z.x && locationX <= z.x + z.width && locationY >= z.y && locationY <= z.y + z.height) {
-            hitId = z.id;
-            break;
-          }
-        }
         const hitId = calculateHitZone(pageY, locationX, locationY, state, scaleRef.current);
         state.setHoveredDropZone(hitId);
       }
@@ -142,15 +130,6 @@ export const LadderCanvas = React.memo(React.forwardRef<LadderCanvasHandle, Ladd
       const canvasX = moveX - touchOffset.current.x;
       const canvasY = moveY - touchOffset.current.y;
       
-      const dropZones = state.dropZones;
-      let hitId = null;
-      for (let i = dropZones.length - 1; i >= 0; i--) {
-        const z = dropZones[i];
-        if (canvasX >= z.x && canvasX <= z.x + z.width && canvasY >= z.y && canvasY <= z.y + z.height) {
-          hitId = z.id;
-          break;
-        }
-      }
       const hitId = calculateHitZone(moveY, canvasX, canvasY, state, scaleRef.current);
       state.setHoveredDropZone(hitId);
     },
@@ -266,7 +245,7 @@ export const LadderCanvas = React.memo(React.forwardRef<LadderCanvasHandle, Ladd
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FBFCFA',
+    backgroundColor: THEME_TOKENS.color.canvas,
     overflow: 'hidden',
     ...(Platform.OS === 'web' ? { touchAction: webTouchPan } : {}),
   },

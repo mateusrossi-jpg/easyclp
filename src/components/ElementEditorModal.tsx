@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLadderStore } from '../store/useLadderStore';
 import { ElementType } from '../types';
+import { THEME_TOKENS } from '../consts/themeTokens';
 
 const INSTRUCTION_TYPES: { type: ElementType; label: string }[] = [
   { type: 'XIC', label: 'NO / XIC' },
@@ -18,6 +19,19 @@ const INSTRUCTION_TYPES: { type: ElementType; label: string }[] = [
 
 const isElementTool = (tool: unknown): tool is ElementType => {
   return typeof tool === 'string' && INSTRUCTION_TYPES.some(inst => inst.type === tool);
+};
+
+const getInstructionHint = (type: ElementType) => {
+  if (type === 'XIC') return 'Lê verdadeiro quando a tag está ON.';
+  if (type === 'XIO') return 'Lê verdadeiro quando a tag está OFF.';
+  if (type === 'OTE') return 'Escreve a saída conforme a energia da rung.';
+  if (type === 'OTL') return 'Trava a saída em ON quando energizado.';
+  if (type === 'OTU') return 'Destrava a saída quando energizado.';
+  if (type === 'TON') return 'Temporizador retentivo enquanto a entrada está ON.';
+  if (type === 'CTU') return 'Conta bordas de subida até o preset.';
+  if (type === 'GEQ') return 'Compara se o valor à esquerda é maior ou igual.';
+  if (type === 'LEQ') return 'Compara se o valor à esquerda é menor ou igual.';
+  return 'Bloco livre para função auxiliar.';
 };
 
 export const ElementEditorModal = () => {
@@ -75,11 +89,17 @@ export const ElementEditorModal = () => {
             <View style={styles.header}>
               <View>
                 <Text style={styles.eyebrow}>Coluna {element.column + 1}</Text>
-                <Text style={styles.title}>Editar instrucao</Text>
+                <Text style={styles.title}>Editar instrução</Text>
               </View>
               <View style={styles.typeBadge}>
                 <Text style={styles.typeBadgeText}>{localType}</Text>
               </View>
+            </View>
+
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryType}>{localType}</Text>
+              <Text style={styles.summaryAddress} numberOfLines={1}>{localAddress.trim() || 'Sem tag definida'}</Text>
+              <Text style={styles.summaryHint}>{getInstructionHint(localType)}</Text>
             </View>
 
             <Text style={styles.label}>Tipo</Text>
@@ -97,12 +117,12 @@ export const ElementEditorModal = () => {
               ))}
             </View>
 
-            <Text style={styles.label}>Endereco / Tag</Text>
+            <Text style={styles.label}>Endereço / tag</Text>
             <TextInput
               style={styles.input}
               value={localAddress}
               onChangeText={setLocalAddress}
-              placeholder="ex: I0.0 ou Motor_A"
+              placeholder="ex: X0 ou Motor_A"
               placeholderTextColor="#666"
               autoCapitalize="none"
               autoCorrect={false}
@@ -136,45 +156,42 @@ export const ElementEditorModal = () => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(17, 24, 39, 0.30)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    zIndex: 999,
   },
   modalContent: {
     width: '100%',
-    maxWidth: 420,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-    padding: 24,
+    maxWidth: 460,
+    backgroundColor: '#F8FAF6',
+    borderRadius: 22,
+    padding: 20,
     borderWidth: 1,
-    borderColor: '#DEE2E6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 10,
-    zIndex: 1000,
+    borderColor: THEME_TOKENS.color.borderSubtle,
+    shadowColor: '#24352C',
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.18,
+    shadowRadius: 34,
+    elevation: 12,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 24,
+    marginBottom: 20,
     gap: 12,
   },
   eyebrow: {
-    color: '#6C757D',
+    color: THEME_TOKENS.color.textMuted,
     fontSize: 10,
     fontWeight: '900',
     fontFamily: 'monospace',
     marginBottom: 3,
-    textTransform: 'uppercase',
   },
   title: {
-    color: '#212529',
-    fontSize: 20,
+    color: THEME_TOKENS.color.text,
+    fontSize: 22,
     fontWeight: '900',
     letterSpacing: 0,
   },
@@ -183,113 +200,145 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 5,
-    borderRadius: 4,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#DEE2E6',
-    backgroundColor: '#F8F9FA',
+    borderColor: THEME_TOKENS.color.borderSubtle,
+    backgroundColor: THEME_TOKENS.color.surface,
   },
   typeBadgeText: {
-    color: '#0D6EFD',
+    color: THEME_TOKENS.color.railLeft,
     fontSize: 11,
     fontWeight: '900',
     fontFamily: 'monospace',
   },
   label: {
-    color: '#6C757D',
+    color: THEME_TOKENS.color.textMuted,
     fontSize: 11,
     fontWeight: '900',
     marginBottom: 10,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0,
+  },
+  summaryCard: {
+    gap: 5,
+    padding: 13,
+    marginBottom: 18,
+    borderRadius: 15,
+    backgroundColor: THEME_TOKENS.color.surface,
+    borderWidth: 1,
+    borderColor: THEME_TOKENS.color.borderSubtle,
+  },
+  summaryType: {
+    color: THEME_TOKENS.color.railLeft,
+    fontSize: 12,
+    fontWeight: '900',
+    fontFamily: 'monospace',
+  },
+  summaryAddress: {
+    color: THEME_TOKENS.color.text,
+    fontSize: 16,
+    fontWeight: '900',
+    fontFamily: 'monospace',
+  },
+  summaryHint: {
+    color: THEME_TOKENS.color.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 17,
   },
   typeGrid: {
     flexDirection: 'row',
-    gap: 10,
-    marginBottom: 24,
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 22,
   },
   typeBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 6,
+    width: '48%',
+    minHeight: 44,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    backgroundColor: THEME_TOKENS.color.surface,
+    borderRadius: 13,
     borderWidth: 1,
-    borderColor: '#DEE2E6',
+    borderColor: THEME_TOKENS.color.borderSubtle,
     alignItems: 'center',
     justifyContent: 'center',
   },
   typeBtnActive: {
-    backgroundColor: '#E7F1FF',
-    borderColor: '#0D6EFD',
+    backgroundColor: '#EAF6EE',
+    borderColor: THEME_TOKENS.color.energy,
   },
   typeBtnText: {
-    color: '#495057',
+    color: THEME_TOKENS.color.charcoal,
     fontWeight: '800',
     fontSize: 11,
   },
   typeBtnTextActive: {
-    color: '#0D6EFD',
+    color: THEME_TOKENS.color.railLeft,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: THEME_TOKENS.color.surface,
     borderWidth: 1,
-    borderColor: '#CED4DA',
-    borderRadius: 6,
-    color: '#212529',
+    borderColor: THEME_TOKENS.color.borderSubtle,
+    borderRadius: 14,
+    color: THEME_TOKENS.color.text,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
     fontFamily: 'monospace',
-    marginBottom: 28,
+    marginBottom: 22,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 14,
   },
   footerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 10,
   },
   footerRight: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
     alignItems: 'center',
   },
   deleteBtn: {
     paddingVertical: 10,
+    paddingHorizontal: 4,
   },
   deleteBtnText: {
-    color: '#F87171',
+    color: THEME_TOKENS.color.danger,
     fontWeight: '800',
     fontSize: 13,
   },
   branchBtn: {
     paddingVertical: 10,
+    paddingHorizontal: 4,
   },
   branchBtnText: {
-    color: '#00E5FF',
+    color: THEME_TOKENS.color.railLeft,
     fontWeight: '800',
     fontSize: 13,
   },
   cancelBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
   },
   cancelBtnText: {
-    color: '#9CA3AF',
+    color: THEME_TOKENS.color.textMuted,
     fontWeight: '800',
     fontSize: 13,
   },
   saveBtn: {
-    backgroundColor: '#111111',
-    paddingHorizontal: 24,
+    backgroundColor: THEME_TOKENS.color.charcoal,
+    paddingHorizontal: 22,
     paddingVertical: 12,
-    borderRadius: 6,
-    shadowColor: '#111111',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    borderRadius: 13,
+    shadowColor: '#24352C',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
     elevation: 4,
   },
   saveBtnText: {

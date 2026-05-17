@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Copy, GitBranch, PenLine, Plus, Settings2, Trash2, Undo2, Redo2 } from 'lucide-react-native';
+import { Copy, GitBranch, PenLine, Plus, Settings2, Trash2, X } from 'lucide-react-native';
 
 import { ComponentMenu } from './ComponentMenu';
 import { ElementEditorModal } from './ElementEditorModal';
@@ -27,10 +27,35 @@ const fullViewportHeight = '100dvh' as unknown as number;
 const safeAreaTop = 'env(safe-area-inset-top)' as unknown as number;
 const safeAreaBottom = 'env(safe-area-inset-bottom)' as unknown as number;
 
+const formatVariableValue = (value: unknown) => {
+  if (typeof value === 'boolean') return value ? 'ON' : 'OFF';
+  if (typeof value === 'number' || typeof value === 'string') return String(value);
+  if (typeof value === 'object' && value !== null) {
+    const data = value as { acc?: number; pre?: number; dn?: boolean; tt?: boolean };
+    const progress = typeof data.acc === 'number' && typeof data.pre === 'number'
+      ? `${data.acc}/${data.pre}`
+      : String(data.acc ?? data.dn ?? '-');
+    if (data.dn) return `${progress} DN`;
+    if (data.tt) return `${progress} TT`;
+    return progress;
+  }
+  return '-';
+};
+
+const getVariableProgress = (value: unknown) => {
+  if (typeof value !== 'object' || value === null) return null;
+  const data = value as { acc?: number; pre?: number };
+  if (typeof data.acc !== 'number' || typeof data.pre !== 'number' || data.pre <= 0) return null;
+  return Math.max(0, Math.min(1, data.acc / data.pre));
+};
+
+const isDerivedVariable = (id: string) => /\.(DN|Q|CV|ET|ACC)$/i.test(id);
+
 export const MobileLadderWorkspace = React.memo(() => {
   const canvasRef = React.useRef<LadderCanvasHandle>(null);
   const isSimulating = useLadderStore(state => state.isSimulating);
   const selectedTool = useLadderStore(state => state.selectedTool);
+  const rungs = useLadderStore(state => state.rungs);
   const elements = useLadderStore(state => state.elements);
   const variables = useLadderStore(state => state.variables);
   const dragState = useLadderStore(state => state.dragState);
@@ -61,21 +86,52 @@ export const MobileLadderWorkspace = React.memo(() => {
   const variableList = useMemo(() => {
     return Object.values(variables).sort((a, b) => a.id.localeCompare(b.id));
   }, [variables]);
+  const variableGroups = useMemo(() => {
+    const groupOrder = ['BOOL', 'TIMER', 'COUNTER', 'NUMBER', 'STRING'];
+    return groupOrder
+      .map(type => ({
+        type,
+        items: variableList.filter(variable => variable.type === type),
+      }))
+      .filter(group => group.items.length > 0);
+  }, [variableList]);
+  const activeSignalCount = useMemo(() => {
+    return variableList.filter(variable => {
+      const value = variable.value;
+      if (value === true) return true;
+      return typeof value === 'object' && value !== null && (
+        ('dn' in value && value.dn === true) ||
+        ('tt' in value && value.tt === true)
+      );
+    }).length;
+  }, [variableList]);
 
   const activeTool = selectedTool;
+  const rungCount = useMemo(() => Object.keys(rungs).length, [rungs]);
 
   const normalizeElementTool = useCallback((tool: ActiveTool): ElementType | null => {
     if (!tool || tool === 'RUNG' || tool === 'PARALLEL_BRANCH') return null;
+    if (tool === 'RESIZE_BRANCH_START' || tool === 'RESIZE_BRANCH_END') return null;
     return tool === 'BOX' ? 'BLOCK' : tool;
   }, []);
 
+  const getNextTag = useCallback((prefix: string) => {
+    let index = 1;
+    while (variables[`${prefix}${index}`]) {
+      index += 1;
+    }
+    return `${prefix}${index}`;
+  }, [variables]);
+
   const getDefaultAddress = useCallback((tool: ElementType) => {
-    if (tool === 'TON') return 'Timer';
-    if (tool === 'CTU') return 'Counter';
-    if (tool === 'GEQ') return 'Value >= 0';
-    if (tool === 'LEQ') return 'Value <= 0';
+    if (tool === 'TON') return getNextTag('T');
+    if (tool === 'CTU') return getNextTag('C');
+    if (tool === 'GEQ') return `${getNextTag('Valor')} >= 0`;
+    if (tool === 'LEQ') return `${getNextTag('Valor')} <= 0`;
+    if (tool === 'OTE' || tool === 'OTL' || tool === 'OTU') return getNextTag('Y');
+    if (tool === 'XIC' || tool === 'XIO') return getNextTag('X');
     return '';
-  }, []);
+  }, [getNextTag]);
 
   const getRungElements = useCallback((rungId: string) => {
     const rung = Object.values(elements).filter(element => element.rungId === rungId);
@@ -118,8 +174,9 @@ export const MobileLadderWorkspace = React.memo(() => {
     setElement(target.rungId, target.id, elementTool, getDefaultAddress(elementTool));
     setSelectedElementId(target.id);
     setSelectedRungId(target.rungId);
+    setEditingElementId(target.id);
     setSelectedTool(null);
-  }, [addRungAfter, createBranchBetween, getBranchEndColumn, getDefaultAddress, getInsertionTarget, normalizeElementTool, setElement, setSelectedTool]);
+  }, [addRungAfter, createBranchBetween, getBranchEndColumn, getDefaultAddress, getInsertionTarget, normalizeElementTool, setEditingElementId, setElement, setSelectedTool]);
 
   const insertToolOnRung = useCallback((rungId: string, tool: Exclude<ActiveTool, null>) => {
     if (tool === 'RUNG') {
@@ -146,8 +203,9 @@ export const MobileLadderWorkspace = React.memo(() => {
     setElement(firstEmpty.rungId, firstEmpty.id, elementTool, getDefaultAddress(elementTool));
     setSelectedElementId(firstEmpty.id);
     setSelectedRungId(firstEmpty.rungId);
+    setEditingElementId(firstEmpty.id);
     setSelectedTool(null);
-  }, [addRungAfter, createBranchBetween, getBranchEndColumn, getDefaultAddress, getRungElements, normalizeElementTool, setElement, setSelectedTool]);
+  }, [addRungAfter, createBranchBetween, getBranchEndColumn, getDefaultAddress, getRungElements, normalizeElementTool, setEditingElementId, setElement, setSelectedTool]);
 
   const handleSelectComponent = useCallback((type: Exclude<ActiveTool, null>) => {
     setSelectedTool(type);
@@ -180,6 +238,15 @@ export const MobileLadderWorkspace = React.memo(() => {
     setInteractionMode('choosing-component');
     setComponentMenuOpen(true);
   }, [mode]);
+
+  const handleComponentFabPress = useCallback(() => {
+    if (activeTool) {
+      setSelectedTool(null);
+      setInteractionMode(selectedRungId ? 'selecting-rung' : 'idle');
+      return;
+    }
+    handleOpenComponentMenu();
+  }, [activeTool, handleOpenComponentMenu, selectedRungId, setSelectedTool]);
 
   const handleRungPress = useCallback((rungId: string) => {
     if (mode !== 'edit') return;
@@ -273,9 +340,24 @@ export const MobileLadderWorkspace = React.memo(() => {
   }, [selectedRungId, removeRung]);
 
   const activeToolLabel = activeTool === 'PARALLEL_BRANCH' ? 'Branch' : activeTool;
+  const selectedElement = selectedElementId ? elements[selectedElementId] : null;
+  const workspaceHint = useMemo(() => {
+    if (mode === 'simulate') {
+      return isSimulating ? 'Toque em contatos BOOL para alternar entradas' : 'Inicie para energizar a lógica';
+    }
+    if (interactionMode === 'choosing-branch-start') return 'Escolha o início do ramo paralelo';
+    if (interactionMode === 'choosing-branch-end') return 'Escolha o fim do ramo paralelo';
+    if (activeToolLabel) return `Toque na Ladder para inserir ${activeToolLabel}`;
+    if (selectedElement) return `${selectedElement.type} selecionado`;
+    if (selectedRungId) return 'Rung selecionada';
+    return 'Toque em uma rung ou adicione componentes';
+  }, [activeToolLabel, interactionMode, isSimulating, mode, selectedElement, selectedRungId]);
 
   const isHoveringTrash = dragState.hoveredDropZoneId === 'TRASH';
   const showTrashZone = dragState.isDragging && dragState.draggedElementId;
+  const showRungMenu = mode === 'edit' && !activeTool && !!selectedRungId && !selectedElementId;
+  const showElementMenu = mode === 'edit' && !activeTool && !!selectedElementId;
+  const showWorkspaceHint = !showRungMenu && !showElementMenu;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -291,6 +373,13 @@ export const MobileLadderWorkspace = React.memo(() => {
           onToggleSimulation={handleToggleSimulation}
           mode={mode}
           onModeChange={handleModeChange}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          rungCount={rungCount}
+          activeSignalCount={activeSignalCount}
+          totalSignalCount={variableList.length}
         />
 
         <View style={styles.canvasShell}>
@@ -310,37 +399,46 @@ export const MobileLadderWorkspace = React.memo(() => {
 
       {!showTrashZone && (
         <>
-          <TouchableOpacity
-            style={[styles.componentFab, mode !== 'edit' && styles.componentFabDisabled]}
-            activeOpacity={0.78}
-            onPress={handleOpenComponentMenu}
-          >
-            <Plus size={22} color="#FFFFFF" strokeWidth={2.4} />
-            <Text style={styles.componentFabText}>
-              {mode !== 'edit' ? 'Simulando' : activeToolLabel ? `Usar ${activeToolLabel}` : 'Componentes'}
-            </Text>
-          </TouchableOpacity>
-
-          <SimulationControls
-            isSimulating={isSimulating}
-            mode={mode}
-            onToggle={handleToggleSimulation}
-          />
-
-          {!isSimulating && mode === 'edit' && (
-            <View style={styles.historyControls}>
-              <TouchableOpacity style={[styles.historyBtn, !canUndo && styles.historyBtnDisabled]} onPress={undo} disabled={!canUndo} activeOpacity={0.7}>
-                <Undo2 size={20} color={canUndo ? '#111827' : '#9CA3AF'} strokeWidth={2.4} />
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.historyBtn, !canRedo && styles.historyBtnDisabled]} onPress={redo} disabled={!canRedo} activeOpacity={0.7}>
-                <Redo2 size={20} color={canRedo ? '#111827' : '#9CA3AF'} strokeWidth={2.4} />
-              </TouchableOpacity>
+          {showWorkspaceHint && (
+            <View style={[
+              styles.workspaceHint,
+              (selectedElementId || selectedRungId || activeTool) && styles.workspaceHintActive,
+              mode === 'simulate' && styles.workspaceHintSimulate,
+            ]}>
+              <View style={[
+                styles.workspaceHintDot,
+                (selectedElementId || selectedRungId || activeTool || isSimulating) && styles.workspaceHintDotActive,
+              ]} />
+              <Text style={styles.workspaceHintText} numberOfLines={1}>{workspaceHint}</Text>
             </View>
+          )}
+
+          {mode === 'edit' && (
+            <TouchableOpacity
+              style={[styles.componentFab, activeTool && styles.componentFabCancel]}
+              activeOpacity={0.78}
+              onPress={handleComponentFabPress}
+            >
+              {activeTool ? <X size={21} color="#FFFFFF" strokeWidth={2.5} /> : <Plus size={22} color="#FFFFFF" strokeWidth={2.4} />}
+              <Text style={styles.componentFabText} numberOfLines={1}>
+                {activeToolLabel ? `Cancelar ${activeToolLabel}` : 'Componentes'}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {mode === 'simulate' && (
+            <SimulationControls
+              isSimulating={isSimulating}
+              mode={mode}
+              onToggle={handleToggleSimulation}
+              activeSignalCount={activeSignalCount}
+              totalSignalCount={variableList.length}
+            />
           )}
         </>
       )}
 
-        {mode === 'edit' && !activeTool && selectedRungId && !selectedElementId && (
+        {showRungMenu && (
           <View style={styles.rungMenu} pointerEvents="box-none">
             <TouchableOpacity style={styles.rungAction} activeOpacity={0.76} onPress={handleOpenComponentMenu}>
               <Plus size={17} color="#111827" strokeWidth={2.2} />
@@ -354,7 +452,7 @@ export const MobileLadderWorkspace = React.memo(() => {
             </TouchableOpacity>
             <TouchableOpacity style={styles.rungAction} activeOpacity={0.76} onPress={handleConfigureRung}>
               <Settings2 size={17} color="#111827" strokeWidth={2.2} />
-              <Text style={styles.rungActionText}>Configurar</Text>
+              <Text style={styles.rungActionText}>Variáveis</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.rungAction, styles.contextButtonDanger]} activeOpacity={0.76} onPress={handleDeleteRung}>
               <Trash2 size={17} color="#B42318" strokeWidth={2.2} />
@@ -363,15 +461,11 @@ export const MobileLadderWorkspace = React.memo(() => {
           </View>
         )}
 
-        {mode === 'edit' && !activeTool && selectedElementId && (
+        {showElementMenu && (
           <View style={styles.contextMenu} pointerEvents="box-none">
             <TouchableOpacity style={styles.contextButton} activeOpacity={0.76} onPress={handleEditSelected}>
               <PenLine size={17} color="#111827" strokeWidth={2.2} />
               <Text style={styles.contextText}>Editar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.contextButton} activeOpacity={0.76} onPress={handleEditSelected}>
-              <Settings2 size={17} color="#111827" strokeWidth={2.2} />
-              <Text style={styles.contextText}>Configurar</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.contextButton} activeOpacity={0.76} onPress={handleDuplicateSelected}>
               <Copy size={17} color="#111827" strokeWidth={2.2} />
@@ -386,8 +480,10 @@ export const MobileLadderWorkspace = React.memo(() => {
 
         {showTrashZone && (
           <View style={[styles.trashZone, isHoveringTrash && styles.trashZoneActive]}>
-            <Trash2 size={24} color={isHoveringTrash ? '#FFFFFF' : '#EF4444'} strokeWidth={2} />
-            <Text style={[styles.trashText, isHoveringTrash && styles.trashTextActive]}>Solte para Excluir</Text>
+            <Trash2 size={24} color={isHoveringTrash ? '#FFFFFF' : THEME_TOKENS.color.danger} strokeWidth={2} />
+            <Text style={[styles.trashText, isHoveringTrash && styles.trashTextActive]}>
+              {isHoveringTrash ? 'Solte para excluir' : 'Arraste aqui para excluir'}
+            </Text>
           </View>
         )}
       </View>
@@ -404,30 +500,62 @@ export const MobileLadderWorkspace = React.memo(() => {
       <Modal transparent visible={variableDrawerOpen} animationType="fade" onRequestClose={() => setVariableDrawerOpen(false)}>
         <Pressable style={styles.drawerBackdrop} onPress={() => setVariableDrawerOpen(false)} />
         <View style={styles.variableDrawer}>
-          <Text style={styles.drawerTitle}>Variáveis</Text>
-          <Text style={styles.drawerSubtitle}>Toque em BOOL para alternar durante testes</Text>
+          <View style={styles.drawerHeader}>
+            <View>
+              <Text style={styles.drawerTitle}>Variáveis</Text>
+              <Text style={styles.drawerSubtitle}>Toque em BOOL para alternar durante testes</Text>
+            </View>
+            <View style={styles.drawerHeaderActions}>
+              <View style={styles.drawerCount}>
+                <Text style={styles.drawerCountText}>{variableList.length}</Text>
+              </View>
+              <TouchableOpacity style={styles.drawerCloseButton} activeOpacity={0.72} onPress={() => setVariableDrawerOpen(false)}>
+                <X size={19} color="#26312D" strokeWidth={2.4} />
+              </TouchableOpacity>
+            </View>
+          </View>
           <ScrollView style={styles.variableList} contentContainerStyle={styles.variableListContent}>
-            {variableList.map(variable => {
-              const value = variable.value;
-              const active = value === true || value?.dn === true;
-              return (
-                <TouchableOpacity
-                  key={variable.id}
-                  style={styles.variableRow}
-                  activeOpacity={0.72}
-                  onPress={() => variable.type === 'BOOL' && updateVariable(variable.id, { value: !variable.value })}
-                >
-                  <View style={[styles.variableDot, active && styles.variableDotActive]} />
-                  <View style={styles.variableInfo}>
-                    <Text style={styles.variableName} numberOfLines={1}>{variable.id}</Text>
-                    <Text style={styles.variableType}>{variable.type}</Text>
-                  </View>
-                  <Text style={styles.variableValue} numberOfLines={1}>
-                    {typeof value === 'object' ? String(value.acc ?? value.dn) : String(value)}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+            {variableGroups.map(group => (
+              <View key={group.type} style={styles.variableGroup}>
+                <Text style={styles.variableGroupTitle}>{group.type}</Text>
+                {group.items.map(variable => {
+                  const value = variable.value;
+                  const active = value === true || (typeof value === 'object' && value !== null && 'dn' in value && value.dn === true);
+                  const canToggle = variable.type === 'BOOL';
+                  const derived = isDerivedVariable(variable.id);
+                  const progress = getVariableProgress(value);
+                  return (
+                    <TouchableOpacity
+                      key={variable.id}
+                      style={[styles.variableRow, active && styles.variableRowActive, (!canToggle || derived) && styles.variableRowReadonly]}
+                      activeOpacity={canToggle && !derived ? 0.72 : 1}
+                      onPress={() => canToggle && !derived && updateVariable(variable.id, { value: !variable.value })}
+                      disabled={!canToggle || derived}
+                    >
+                      <View style={[styles.variableDot, active && styles.variableDotActive]} />
+                      <View style={styles.variableInfo}>
+                        <Text style={styles.variableName} numberOfLines={1}>{variable.id}</Text>
+                        <Text style={styles.variableType}>{derived ? `${variable.type} derivado` : canToggle ? 'BOOL alternável' : variable.type}</Text>
+                      </View>
+                      <Text style={[styles.variableValue, active && styles.variableValueActive]} numberOfLines={1}>
+                        {formatVariableValue(value)}
+                      </Text>
+                      {progress !== null && (
+                        <View style={styles.variableProgressTrack}>
+                          <View style={[styles.variableProgressFill, { width: `${progress * 100}%` }]} />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ))}
+            {variableList.length === 0 && (
+              <View style={styles.variableEmpty}>
+                <Text style={styles.variableEmptyTitle}>Sem variáveis</Text>
+                <Text style={styles.variableEmptyCopy}>Adicione um endereço em uma instrução para criar a primeira tag.</Text>
+              </View>
+            )}
           </ScrollView>
         </View>
       </Modal>
@@ -454,42 +582,90 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
     marginBottom: 0,
     backgroundColor: THEME_TOKENS.color.canvas,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(200, 215, 201, 0.65)',
   },
   componentFab: {
     position: 'absolute',
     left: 16,
     bottom: 22,
-    minWidth: 166,
-    height: 62,
+    minWidth: 158,
+    maxWidth: '72%',
+    height: 58,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    borderRadius: 24,
-    backgroundColor: THEME_TOKENS.color.text,
+    borderRadius: 19,
+    backgroundColor: THEME_TOKENS.color.charcoal,
     ...THEME_TOKENS.shadow.floating,
   },
-  componentFabDisabled: {
-    backgroundColor: '#4B5563',
-    shadowOpacity: 0.1,
+  componentFabCancel: {
+    backgroundColor: THEME_TOKENS.color.danger,
+    shadowColor: '#7F1D1D',
   },
   componentFabText: {
+    flexShrink: 1,
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '900',
+  },
+  workspaceHint: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 92,
+    minHeight: 42,
+    maxWidth: 560,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+    borderWidth: 1,
+    borderColor: THEME_TOKENS.color.borderSubtle,
+    ...THEME_TOKENS.shadow.soft,
+  },
+  workspaceHintActive: {
+    backgroundColor: 'rgba(238, 248, 241, 0.94)',
+    borderColor: 'rgba(46, 164, 97, 0.34)',
+  },
+  workspaceHintSimulate: {
+    bottom: 96,
+  },
+  workspaceHintDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#C9D2CB',
+  },
+  workspaceHintDotActive: {
+    backgroundColor: THEME_TOKENS.color.energy,
+  },
+  workspaceHintText: {
+    flexShrink: 1,
+    color: THEME_TOKENS.color.charcoal,
+    fontSize: 12,
+    fontWeight: '900',
+    textAlign: 'center',
   },
   contextMenu: {
     position: 'absolute',
     left: 14,
     right: 14,
     bottom: 96,
-    minHeight: 58,
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     padding: 8,
-    borderRadius: 24,
+    borderRadius: 19,
     backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    borderWidth: 1,
+    borderColor: THEME_TOKENS.color.borderSubtle,
     ...THEME_TOKENS.shadow.floating,
   },
   rungMenu: {
@@ -497,26 +673,28 @@ const styles = StyleSheet.create({
     left: 22,
     right: 22,
     bottom: 96,
-    minHeight: 58,
+    minHeight: 56,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     padding: 8,
-    borderRadius: 24,
+    borderRadius: 19,
     backgroundColor: 'rgba(255, 255, 255, 0.96)',
+    borderWidth: 1,
+    borderColor: THEME_TOKENS.color.borderSubtle,
     ...THEME_TOKENS.shadow.floating,
   },
   rungAction: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 42,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
-    borderRadius: 16,
+    borderRadius: 13,
     backgroundColor: THEME_TOKENS.color.surfaceMuted,
   },
   rungActionActive: {
-    backgroundColor: '#E7F7EC',
+    backgroundColor: '#DFF1E5',
   },
   rungActionText: {
     color: '#111827',
@@ -528,11 +706,11 @@ const styles = StyleSheet.create({
   },
   contextButton: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 42,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 3,
-    borderRadius: 16,
+    borderRadius: 13,
     backgroundColor: THEME_TOKENS.color.surfaceMuted,
   },
   contextButtonDanger: {
@@ -556,48 +734,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    borderRadius: 24,
-    backgroundColor: '#FEE2E2',
+    borderRadius: 19,
+    backgroundColor: '#FFF1F0',
     borderWidth: 2,
-    borderColor: '#EF4444',
+    borderColor: THEME_TOKENS.color.danger,
     borderStyle: 'dashed',
     zIndex: 50,
   },
   trashZoneActive: {
-    backgroundColor: '#EF4444',
+    backgroundColor: THEME_TOKENS.color.danger,
     borderStyle: 'solid',
   },
   trashText: {
-    color: '#EF4444',
+    color: THEME_TOKENS.color.danger,
     fontSize: 16,
     fontWeight: '900',
   },
   trashTextActive: {
     color: '#FFFFFF',
   },
-  historyControls: {
-    position: 'absolute',
-    right: 16,
-    bottom: 22,
-    flexDirection: 'row',
-    gap: 8,
-  },
-  historyBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...THEME_TOKENS.shadow.floating,
-  },
-  historyBtnDisabled: {
-    backgroundColor: '#F3F4F6',
-    shadowOpacity: 0.05,
-  },
   drawerBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(17, 24, 39, 0.22)',
+    backgroundColor: 'rgba(17, 24, 39, 0.26)',
   },
   variableDrawer: {
     position: 'absolute',
@@ -606,11 +764,13 @@ const styles = StyleSheet.create({
     right: 0,
     width: '86%',
     maxWidth: 390,
-    paddingTop: 28,
+    paddingTop: 30,
     paddingHorizontal: 18,
     paddingBottom: 24,
-    backgroundColor: THEME_TOKENS.color.surface,
-    shadowColor: '#111827',
+    backgroundColor: '#F8FAF6',
+    borderLeftWidth: 1,
+    borderLeftColor: THEME_TOKENS.color.borderSubtle,
+    shadowColor: '#24352C',
     shadowOffset: { width: -12, height: 0 },
     shadowOpacity: 0.1,
     shadowRadius: 28,
@@ -618,14 +778,51 @@ const styles = StyleSheet.create({
   },
   drawerTitle: {
     color: '#111827',
-    fontSize: 23,
+    fontSize: 24,
     fontWeight: '900',
+  },
+  drawerHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  drawerHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   drawerSubtitle: {
     marginTop: 4,
-    color: '#6B7280',
+    color: THEME_TOKENS.color.textMuted,
     fontSize: 12,
     fontWeight: '700',
+  },
+  drawerCount: {
+    minWidth: 42,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: THEME_TOKENS.color.surface,
+    borderWidth: 1,
+    borderColor: THEME_TOKENS.color.borderSubtle,
+  },
+  drawerCountText: {
+    color: THEME_TOKENS.color.charcoal,
+    fontSize: 13,
+    fontWeight: '900',
+    fontFamily: 'monospace',
+  },
+  drawerCloseButton: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+    backgroundColor: THEME_TOKENS.color.surface,
+    borderWidth: 1,
+    borderColor: THEME_TOKENS.color.borderSubtle,
   },
   variableList: {
     flex: 1,
@@ -633,25 +830,46 @@ const styles = StyleSheet.create({
   },
   variableListContent: {
     paddingBottom: 28,
+    gap: 16,
+  },
+  variableGroup: {
     gap: 8,
   },
+  variableGroupTitle: {
+    color: THEME_TOKENS.color.textMuted,
+    fontSize: 11,
+    fontWeight: '900',
+    fontFamily: 'monospace',
+    paddingHorizontal: 2,
+  },
   variableRow: {
-    minHeight: 56,
+    minHeight: 58,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 12,
-    borderRadius: 16,
-    backgroundColor: THEME_TOKENS.color.surfaceMuted,
+    paddingVertical: 9,
+    borderRadius: 14,
+    backgroundColor: THEME_TOKENS.color.surface,
+    borderWidth: 1,
+    borderColor: THEME_TOKENS.color.borderSubtle,
+    overflow: 'hidden',
+  },
+  variableRowActive: {
+    borderColor: 'rgba(46, 164, 97, 0.42)',
+    backgroundColor: '#EEF8F1',
+  },
+  variableRowReadonly: {
+    opacity: 0.92,
   },
   variableDot: {
     width: 10,
     height: 10,
     borderRadius: 6,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: '#C9D2CB',
   },
   variableDotActive: {
-    backgroundColor: '#2EAD5B',
+    backgroundColor: THEME_TOKENS.color.energy,
   },
   variableInfo: {
     flex: 1,
@@ -664,16 +882,65 @@ const styles = StyleSheet.create({
   },
   variableType: {
     marginTop: 2,
-    color: '#6B7280',
+    color: THEME_TOKENS.color.textMuted,
     fontSize: 10,
     fontWeight: '800',
   },
   variableValue: {
-    maxWidth: 92,
-    color: '#374151',
+    minWidth: 84,
+    maxWidth: 112,
+    color: THEME_TOKENS.color.charcoal,
     fontSize: 12,
     fontWeight: '900',
     fontFamily: 'monospace',
     textAlign: 'right',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 9,
+    backgroundColor: THEME_TOKENS.color.surfaceMuted,
+    overflow: 'hidden',
+  },
+  variableValueActive: {
+    color: THEME_TOKENS.color.railLeft,
+    backgroundColor: '#DDEFE4',
+  },
+  variableProgressTrack: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 5,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: THEME_TOKENS.color.surfaceMuted,
+    overflow: 'hidden',
+  },
+  variableProgressFill: {
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: THEME_TOKENS.color.energy,
+  },
+  variableEmpty: {
+    minHeight: 144,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    borderRadius: 16,
+    backgroundColor: THEME_TOKENS.color.surface,
+    borderWidth: 1,
+    borderColor: THEME_TOKENS.color.borderSubtle,
+  },
+  variableEmptyTitle: {
+    color: THEME_TOKENS.color.text,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  variableEmptyCopy: {
+    maxWidth: 250,
+    marginTop: 6,
+    color: THEME_TOKENS.color.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 17,
+    textAlign: 'center',
   },
 });

@@ -1,4 +1,3 @@
-typescript
 const lightPalette = {
   background: '#F4F7F6', // Off-white premium
   rungInactive: '#95A5A6', // Linhas inativas bem visíveis

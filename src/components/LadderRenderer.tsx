@@ -10,6 +10,15 @@ import { ActiveTool, EditorInteractionMode, ElementType, LadderElement, Workspac
 const COIL_TYPES: ElementType[] = ['OTE', 'OTL', 'OTU'];
 export const LADDER_INTERNAL_WIDTH = 920;
 
+const formatBlockValue = (value: unknown) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return '0';
+  if (numericValue >= 1000) {
+    return `${Number((numericValue / 1000).toFixed(1))}s`;
+  }
+  return String(numericValue);
+};
+
 const AnimatedG = Animated.createAnimatedComponent(G);
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
@@ -55,7 +64,7 @@ const HighlightOverlay = React.memo(({ isHighlighted, width, height, y = 0 }: { 
   );
 });
 
-const getElementX = (el: LadderElement) => {
+export const getElementX = (el: LadderElement) => {
   if (COIL_TYPES.includes(el.type)) return GEO.rightRailX - GEO.columnWidth;
   if (el.type === 'CTU') return (GEO as any).ctuX || GEO.rightRailX - 120;
   if (el.type === 'TON') {
@@ -83,7 +92,13 @@ const RungRow = React.memo(({
   const rungElements = allRungElements.filter((el: LadderElement) => el.type !== 'EMPTY');
   const normalElements = rungElements.filter((el: LadderElement) => (el.branchIndex || 0) === 0);
   const branchElements = rungElements.filter((el: LadderElement) => (el.branchIndex || 0) > 0);
-  const branchRows = Array.from(new Set(allRungElements.filter((el: LadderElement) => (el.branchIndex || 0) > 0).map((el: LadderElement) => el.branchIndex))).sort((a: any, b: any) => a - b);
+  const branchRows = Array.from(
+    new Set<number>(
+      allRungElements
+        .filter((el: LadderElement) => (el.branchIndex || 0) > 0)
+        .map((el: LadderElement) => el.branchIndex)
+    )
+  ).sort((a, b) => a - b);
   
   const selectedRung = selectedRungId === rung.id;
   const toolTargetRung = hoveredDropZoneId === rung.id || (!!activeTool && selectedRung && !selectedElementId && mode === 'edit' && !isSimulating);
@@ -113,7 +128,7 @@ const RungRow = React.memo(({
     else if (COIL_TYPES.includes(el.type)) Comp = <LadderCoil {...props} type={el.type as any} />;
     else if (el.type === 'TON' || el.type === 'CTU') {
       const v = variables[el.address]?.value as any;
-      Comp = <LadderBlockSvg type={el.type} {...props} accValue={String(v?.acc || 0)} preValue={String(v?.pre || 0)} />;
+      Comp = <LadderBlockSvg type={el.type} {...props} accValue={formatBlockValue(v?.acc || 0)} preValue={formatBlockValue(v?.pre || 0)} />;
     } else if (el.type === 'GEQ' || el.type === 'LEQ') {
       const parts = el.address.split(' ');
       Comp = <CompareContactSvg {...props} operator={parts[1] || el.type} label={parts[0]} value={parts[2] || '0'} />;
@@ -125,8 +140,21 @@ const RungRow = React.memo(({
 
     return (
       <G key={el.id} transform={`translate(${x}, ${y})`}>
+        {el.type !== 'EMPTY' && (
+          <Rect
+            x={4}
+            y={13}
+            width={symbolWidth - 8}
+            height={GEO.rungHeight - 26}
+            rx={12}
+            fill={isPowered ? GEO.colorElementPlateActive : GEO.colorElementPlate}
+            stroke={isPowered ? 'rgba(46, 164, 97, 0.28)' : 'rgba(200, 215, 201, 0.55)'}
+            strokeWidth={0.9}
+            vectorEffect="non-scaling-stroke"
+          />
+        )}
         {(selected || toolTarget) && (
-          <Rect x={2} y={8} width={symbolWidth - 4} height={GEO.rungHeight - 16} rx={16} fill={toolTarget ? 'rgba(31, 41, 51, 0.055)' : GEO.colorSelection} stroke={toolTarget ? '#1F2933' : GEO.colorPowerOn} strokeWidth={1.4} vectorEffect="non-scaling-stroke" />
+          <Rect x={1} y={9} width={symbolWidth - 2} height={GEO.rungHeight - 18} rx={14} fill={toolTarget ? 'rgba(38, 49, 45, 0.055)' : GEO.colorSelection} stroke={toolTarget ? GEO.colorSymbolMuted : GEO.colorPowerOn} strokeWidth={1.35} vectorEffect="non-scaling-stroke" />
         )}
         {Comp}
         {!['GEQ', 'LEQ', 'TON', 'CTU', 'EMPTY'].includes(el.type) && (
@@ -159,8 +187,9 @@ const RungRow = React.memo(({
         <Rect x={GEO.leftRailX} y={localY + 6} width={GEO.rightRailX - GEO.leftRailX} height={rungHeight - 12} rx={18} fill={toolTargetRung ? 'rgba(31, 41, 51, 0.05)' : GEO.colorSelection} />
       )}
       <Rect x={GEO.leftRailX} y={localY} width={GEO.rightRailX - GEO.leftRailX} height={rungHeight} fill="transparent" onPress={() => onRungPress(rung.id)} />
-      <SvgText x={GEO.leftRailX - 12} y={localY + GEO.centerY + 4} fontSize={10} fontWeight="900" textAnchor="end" fill="#CBD5E1">{rIdx}</SvgText>
-      <Line x1={GEO.leftRailX} y1={localY + GEO.centerY} x2={GEO.rightRailX} y2={localY + GEO.centerY} stroke={GEO.colorPowerOff} strokeWidth={GEO.lineWidth} strokeOpacity={0.9} vectorEffect="non-scaling-stroke" />
+      <Rect x={GEO.leftRailX - 31} y={localY + GEO.centerY - 13} width={22} height={22} rx={7} fill="#F4F7F2" stroke={GEO.colorGuide} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+      <SvgText x={GEO.leftRailX - 20} y={localY + GEO.centerY + 4} fontSize={10} fontWeight="900" textAnchor="middle" fill="#91A098">{rIdx}</SvgText>
+      <Line x1={GEO.leftRailX} y1={localY + GEO.centerY} x2={GEO.rightRailX} y2={localY + GEO.centerY} stroke={GEO.colorPowerOff} strokeWidth={GEO.lineWidth} strokeOpacity={0.58} vectorEffect="non-scaling-stroke" />
       {rung.isPowered && (
         <Line x1={GEO.leftRailX} y1={localY + GEO.centerY} x2={GEO.rightRailX} y2={localY + GEO.centerY} stroke={GEO.colorPowerOn} strokeWidth={GEO.activeLineWidth} vectorEffect="non-scaling-stroke" />
       )}
@@ -194,14 +223,14 @@ const RungRow = React.memo(({
 
         return (
           <G key={`${rung.id}-branch-${branchIndex}`}>
-            <Line x1={bStartX} y1={parentYStart} x2={bStartX} y2={branchY + GEO.centerY} stroke={branchColor} strokeWidth={branchWidth} vectorEffect="non-scaling-stroke" />
-            <Line x1={bEndX} y1={parentYEnd} x2={bEndX} y2={branchY + GEO.centerY} stroke={branchColor} strokeWidth={branchWidth} vectorEffect="non-scaling-stroke" />
-            <Line x1={bStartX} y1={branchY + GEO.centerY} x2={bEndX} y2={branchY + GEO.centerY} stroke={branchColor} strokeWidth={branchWidth} vectorEffect="non-scaling-stroke" />
+            <Line x1={bStartX} y1={parentYStart} x2={bStartX} y2={branchY + GEO.centerY} stroke={branchColor} strokeWidth={branchWidth} strokeOpacity={branchPowered ? 1 : 0.62} vectorEffect="non-scaling-stroke" />
+            <Line x1={bEndX} y1={parentYEnd} x2={bEndX} y2={branchY + GEO.centerY} stroke={branchColor} strokeWidth={branchWidth} strokeOpacity={branchPowered ? 1 : 0.62} vectorEffect="non-scaling-stroke" />
+            <Line x1={bStartX} y1={branchY + GEO.centerY} x2={bEndX} y2={branchY + GEO.centerY} stroke={branchColor} strokeWidth={branchWidth} strokeOpacity={branchPowered ? 1 : 0.62} vectorEffect="non-scaling-stroke" />
             {showHandles && (
               <G>
-                <Circle cx={bStartX} cy={parentYStart} r={6} fill="#E7F1FF" stroke="#0D6EFD" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+                <Circle cx={bStartX} cy={parentYStart} r={6} fill="#F8FAF6" stroke={GEO.colorPowerOn} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
                 <Rect x={bStartX - 16} y={parentYStart - 16} width={32} height={32} fill="transparent" onPressIn={(e) => { const { pageX, pageY } = e.nativeEvent as any; useLadderStore.getState().startDragging('RESIZE_BRANCH_START', pageX, pageY, { rungId: rung.id, branchIndex }); }} />
-                <Circle cx={bEndX} cy={parentYEnd} r={6} fill="#E7F1FF" stroke="#0D6EFD" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+                <Circle cx={bEndX} cy={parentYEnd} r={6} fill="#F8FAF6" stroke={GEO.colorPowerOn} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
                 <Rect x={bEndX - 16} y={parentYEnd - 16} width={32} height={32} fill="transparent" onPressIn={(e) => { const { pageX, pageY } = e.nativeEvent as any; useLadderStore.getState().startDragging('RESIZE_BRANCH_END', pageX, pageY, { rungId: rung.id, branchIndex }); }} />
               </G>
             )}
@@ -211,7 +240,7 @@ const RungRow = React.memo(({
       {normalElements.map((el: LadderElement) => renderElement(el, getElementX(el), localY))}
       {branchElements.map((el: LadderElement) => renderElement(el, getElementX(el), getBranchY(localY, el.branchIndex || 0)))}
       {showBranchPoints && branchPointElements.map((el: LadderElement) => renderBranchPoint(el.column, getElementX(el), localY, branchStartColumn === el.column))}
-      <Line x1={GEO.leftRailX} y1={localY + rungHeight} x2={GEO.rightRailX} y2={localY + rungHeight} stroke={GEO.colorGuide} strokeWidth={1} strokeOpacity={0.65} vectorEffect="non-scaling-stroke" />
+      <Line x1={GEO.leftRailX} y1={localY + rungHeight} x2={GEO.rightRailX} y2={localY + rungHeight} stroke={GEO.colorGuide} strokeWidth={1} strokeOpacity={0.74} vectorEffect="non-scaling-stroke" />
     </AnimatedRungGroup>
   );
 }, (prev, next) => {
@@ -349,10 +378,11 @@ export const LadderRenderer: React.FC<LadderRendererProps> = React.memo(({
     >
         {/* 1. BACKGROUND */}
         <Rect x={0} y={0} width={LADDER_INTERNAL_WIDTH} height={canvasHeight} fill={GEO.colorCanvas} />
+        <Rect x={GEO.leftRailX - 18} y={GEO.topPadding - 18} width={GEO.rightRailX - GEO.leftRailX + 36} height={canvasHeight - GEO.topPadding - 10} rx={18} fill="rgba(255,255,255,0.42)" stroke="rgba(221,231,221,0.7)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
 
         {/* 2. RAILS */}
-        <Line x1={GEO.leftRailX} y1={GEO.topPadding} x2={GEO.leftRailX} y2={canvasHeight - 30} stroke={GEO.colorRailLeft} strokeWidth={GEO.railWidth} vectorEffect="non-scaling-stroke" />
-        <Line x1={GEO.rightRailX} y1={GEO.topPadding} x2={GEO.rightRailX} y2={canvasHeight - 30} stroke={GEO.colorRailRight} strokeWidth={GEO.railWidth} vectorEffect="non-scaling-stroke" />
+        <Line x1={GEO.leftRailX} y1={GEO.topPadding} x2={GEO.leftRailX} y2={canvasHeight - 30} stroke={GEO.colorRailLeft} strokeWidth={GEO.railWidth} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+        <Line x1={GEO.rightRailX} y1={GEO.topPadding} x2={GEO.rightRailX} y2={canvasHeight - 30} stroke={GEO.colorRailRight} strokeWidth={GEO.railWidth} strokeOpacity={0.82} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
 
         {rungLayouts.map(({ rung, y: rungY, height: rungHeight }, rIdx) => (
           <RungRow

@@ -41,8 +41,8 @@ export const LADDER_GEOMETRY = {
   compareHeight: 30,
   
   // Visual Weight
-  lineWidth: 1.65,
-  activeLineWidth: 2.35,
+  lineWidth: 1.45,
+  activeLineWidth: 2.65,
   columnWidth: 84,
   labelFontSize: 12,
   
@@ -56,8 +56,11 @@ export const LADDER_GEOMETRY = {
   colorBlockBody: THEME_TOKENS.color.surfaceMuted,
   colorText: THEME_TOKENS.color.text,
   colorSymbol: THEME_TOKENS.color.text,
-  colorGuide: '#EDF2ED',
-  colorSelection: 'rgba(67, 185, 112, 0.08)',
+  colorGuide: '#E4ECE4',
+  colorSelection: 'rgba(46, 164, 97, 0.10)',
+  colorSymbolMuted: '#5F6D65',
+  colorElementPlate: 'rgba(255, 255, 255, 0.76)',
+  colorElementPlateActive: 'rgba(232, 247, 236, 0.88)',
 };
 
 type LayoutElement = {

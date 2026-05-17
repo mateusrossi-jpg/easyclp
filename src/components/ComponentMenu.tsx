@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import { Search, X } from 'lucide-react-native';
 
 import { ActiveTool } from '../types';
@@ -19,9 +19,9 @@ const COMPONENT_GROUPS: Array<{
   {
     title: 'Bobinas',
     items: [
-      { type: 'OTE', title: 'OTE', description: 'Saida energizada', symbol: '-( )-' },
-      { type: 'OTL', title: 'OTL', description: 'Set / trava saida', symbol: '-(S)-' },
-      { type: 'OTU', title: 'OTU', description: 'Reset / destrava saida', symbol: '-(R)-' },
+      { type: 'OTE', title: 'OTE', description: 'Saída energizada', symbol: '-( )-' },
+      { type: 'OTL', title: 'OTL', description: 'Set / trava saída', symbol: '-(S)-' },
+      { type: 'OTU', title: 'OTU', description: 'Reset / destrava saída', symbol: '-(R)-' },
     ],
   },
   {
@@ -61,7 +61,9 @@ interface ComponentMenuProps {
 }
 
 export const ComponentMenu = React.memo(({ selectedTool, visible, onClose, onSelect }: ComponentMenuProps) => {
+  const { width } = useWindowDimensions();
   const [query, setQuery] = React.useState('');
+  const useWideGrid = width >= 720;
   const normalizedQuery = query.trim().toLowerCase();
   const groups = React.useMemo(() => {
     if (!normalizedQuery) return COMPONENT_GROUPS;
@@ -105,16 +107,22 @@ export const ComponentMenu = React.memo(({ selectedTool, visible, onClose, onSel
         </View>
 
         <ScrollView style={styles.groupScroll} contentContainerStyle={styles.groupContent} showsVerticalScrollIndicator={false}>
+          {groups.length === 0 && (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>Nenhum componente encontrado</Text>
+              <Text style={styles.emptyCopy}>Tente buscar por contato, bobina, timer, contador ou comparador.</Text>
+            </View>
+          )}
           {groups.map(group => (
             <View key={group.title} style={styles.group}>
               <Text style={styles.groupTitle}>{group.title}</Text>
-              <View style={styles.grid}>
+              <View style={[styles.grid, useWideGrid && styles.gridWide]}>
                 {group.items.map(item => {
                   const active = selectedTool === item.type;
                   return (
                     <TouchableOpacity
                       key={item.type}
-                      style={[styles.componentButton, active && styles.componentButtonActive]}
+                      style={[styles.componentButton, useWideGrid && styles.componentButtonWide, active && styles.componentButtonActive]}
                       activeOpacity={0.78}
                       onPress={() => onSelect(item.type)}
                     >
@@ -140,7 +148,7 @@ export const ComponentMenu = React.memo(({ selectedTool, visible, onClose, onSel
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(17, 24, 39, 0.2)',
+    backgroundColor: 'rgba(17, 24, 39, 0.26)',
   },
   sheet: {
     position: 'absolute',
@@ -148,25 +156,27 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     paddingHorizontal: 18,
-    paddingTop: 12,
+    paddingTop: 10,
     maxHeight: '86%',
-    paddingBottom: 28,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    backgroundColor: THEME_TOKENS.color.surfaceWarm,
-    shadowColor: '#111827',
+    paddingBottom: 26,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: '#F8FAF6',
+    borderWidth: 1,
+    borderColor: THEME_TOKENS.color.borderSubtle,
+    shadowColor: '#24352C',
     shadowOffset: { width: 0, height: -16 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.16,
     shadowRadius: 34,
     elevation: 12,
   },
   handle: {
     alignSelf: 'center',
-    width: 46,
+    width: 42,
     height: 5,
     borderRadius: 3,
     marginBottom: 14,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: '#CBD7CD',
   },
   header: {
     flexDirection: 'row',
@@ -181,7 +191,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 3,
-    color: '#6B7280',
+    color: THEME_TOKENS.color.textMuted,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -190,17 +200,19 @@ const styles = StyleSheet.create({
     height: 46,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 18,
+    borderRadius: 15,
     backgroundColor: THEME_TOKENS.color.surface,
+    borderWidth: 1,
+    borderColor: THEME_TOKENS.color.borderSubtle,
   },
   searchBox: {
-    minHeight: 50,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 14,
     marginBottom: 16,
-    borderRadius: 18,
+    borderRadius: 15,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: THEME_TOKENS.color.borderSubtle,
@@ -213,17 +225,42 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   groupScroll: {
-    maxHeight: 480,
+    maxHeight: 488,
   },
   groupContent: {
     paddingBottom: 10,
-    gap: 18,
+    gap: 16,
+  },
+  emptyState: {
+    minHeight: 128,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    backgroundColor: THEME_TOKENS.color.surface,
+    borderWidth: 1,
+    borderColor: THEME_TOKENS.color.borderSubtle,
+  },
+  emptyTitle: {
+    color: THEME_TOKENS.color.text,
+    fontSize: 15,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  emptyCopy: {
+    maxWidth: 260,
+    marginTop: 6,
+    color: THEME_TOKENS.color.textMuted,
+    fontSize: 12,
+    fontWeight: '700',
+    lineHeight: 17,
+    textAlign: 'center',
   },
   group: {
     gap: 10,
   },
   groupTitle: {
-    color: '#374151',
+    color: THEME_TOKENS.color.charcoal,
     fontSize: 12,
     fontWeight: '900',
     letterSpacing: 0,
@@ -232,37 +269,44 @@ const styles = StyleSheet.create({
   grid: {
     gap: 10,
   },
+  gridWide: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
   componentButton: {
-    minHeight: 76,
+    minHeight: 72,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    borderRadius: 20,
+    borderRadius: 16,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: THEME_TOKENS.color.borderSubtle,
-    shadowColor: '#1F2933',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.04,
-    shadowRadius: 16,
+    shadowColor: '#24352C',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.035,
+    shadowRadius: 12,
     elevation: 1,
   },
+  componentButtonWide: {
+    width: '48.5%',
+  },
   componentButtonActive: {
-    borderColor: '#2EAD5B',
-    backgroundColor: '#F1FBF4',
+    borderColor: THEME_TOKENS.color.energy,
+    backgroundColor: '#EEF8F1',
   },
   symbolPlate: {
-    width: 54,
-    height: 52,
+    width: 52,
+    height: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 16,
+    borderRadius: 13,
     backgroundColor: THEME_TOKENS.color.surfaceMuted,
   },
   symbolPlateActive: {
-    backgroundColor: '#E0F5E7',
+    backgroundColor: '#DDEFE4',
   },
   symbol: {
     color: '#111827',
@@ -281,7 +325,7 @@ const styles = StyleSheet.create({
   },
   componentDescription: {
     marginTop: 4,
-    color: '#6B7280',
+    color: THEME_TOKENS.color.textMuted,
     fontSize: 12,
     fontWeight: '800',
   },
